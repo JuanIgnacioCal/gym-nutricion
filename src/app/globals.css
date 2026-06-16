@@ -1,0 +1,70 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-primario: #FF6B00;
+  --color-acento: #FFD700;
+  --color-fondo: #0D0D0D;
+  --color-superficie: #1A1A1A;
+  --color-superficie-alt: #242424;
+  --color-texto: #FFFFFF;
+  --color-texto-sec: #A0A0A0;
+  --color-borde: #333333;
+  --color-exito: #22C55E;
+  --color-error: #EF4444;
+  /* Color de texto/íconos sobre fondos primarios (botones).
+     El primario es amarillo → texto negro para contraste legible.
+     El layout puede sobrescribirlo desde gym.config.json (colores.sobrePrimario). */
+  --color-sobre-primario: #0A0A0A;
+  --radio-card: 16px;
+  --radio-btn: 12px;
+  --alto-nav: 72px;
+}
+
+body {
+  background-color: var(--color-fondo);
+  color: var(--color-texto);
+  font-family: 'Inter', sans-serif;
+  padding-bottom: var(--alto-nav);
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Tema claro */
+.tema-claro {
+  --color-fondo: #F5F5F5;
+  --color-superficie: #FFFFFF;
+  --color-superficie-alt: #F0F0F0;
+  --color-texto: #111111;
+  --color-texto-sec: #555555;
+  --color-borde: #E0E0E0;
+}
+
+/* Scrollbar personalizado */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: var(--color-fondo); }
+::-webkit-scrollbar-thumb { background: var(--color-borde); border-radius: 2px; }
+
+/* Oculta scrollbar en filas horizontales de chips/filtros */
+.scrollbar-none { scrollbar-width: none; -ms-overflow-style: none; }
+.scrollbar-none::-webkit-scrollbar { display: none; }
+
+/* Transición de entrada de pantallas y slides */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animar-entrada { animation: fadeIn 0.3s ease-out; }
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(24px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.animar-slide { animation: slideIn 0.3s ease-out; }
+
+/* Toast inferior */
+@keyframes toastUp {
+  from { opacity: 0; transform: translate(-50%, 16px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+.animar-toast { animation: toastUp 0.25s ease-out; }

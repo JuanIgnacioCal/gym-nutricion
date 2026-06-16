@@ -1,0 +1,19 @@
+{
+  "gym": {
+    "nombre": "Overall Center Gym",
+    "tagline": "El gym que nunca duerme",
+    "logo": "/logo.png",
+    "colores": {
+      "primario": "#F5C200",
+      "acento": "#FFFFFF",
+      "fondo": "#0A0A0A",
+      "superficie": "#141414",
+      "superficieAlt": "#1E1E1E",
+      "texto": "#FFFFFF",
+      "textoSecundario": "#A0A0A0",
+      "borde": "#2A2A2A",
+      "exito": "#22C55E",
+      "error": "#EF4444"
+    }
+  }
+}
