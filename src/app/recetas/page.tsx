@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import type { Receta, UserProfile } from '@/types';
-import { getUser, aplicarTema } from '@/lib/usuario';
+import { getUserAsync, aplicarTema } from '@/lib/usuario';
 import BottomNav from '@/components/BottomNav';
 import RecipeCard from '@/components/RecipeCard';
 import { useToast } from '@/components/Toast';
@@ -31,19 +31,22 @@ export default function RecetasPage() {
   const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
-    const u = getUser();
-    if (!u || !u.onboardingCompleto) {
-      router.replace('/onboarding');
-      return;
-    }
-    aplicarTema(u.tema);
-    setPerfil(u);
-
+    let cancelado = false;
     (async () => {
+      const u = await getUserAsync();
+      if (cancelado) return;
+      if (!u || u.onboardingCompleto === false) {
+        router.replace('/onboarding');
+        return;
+      }
+      aplicarTema(u.tema);
+      setPerfil(u);
+
       const [recRes, favRes] = await Promise.all([
         fetch('/api/recetas?limite=200'),
         fetch(`/api/favoritos?usuario_id=${u.id}&tipo=receta`),
       ]);
+      if (cancelado) return;
       setRecetas(await recRes.json());
       const favs = await favRes.json();
       const map: Record<number, number> = {};
@@ -51,6 +54,9 @@ export default function RecetasPage() {
       setFavMap(map);
       setCargando(false);
     })();
+    return () => {
+      cancelado = true;
+    };
   }, [router]);
 
   const visibles = useMemo(() => {

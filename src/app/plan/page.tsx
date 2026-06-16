@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Menu } from 'lucide-react';
 import type { PlanDiario, Receta, TipoComida, UserProfile, MacroTotales } from '@/types';
-import { getUser, aplicarTema } from '@/lib/usuario';
+import { getUserAsync, aplicarTema } from '@/lib/usuario';
 import {
   fechaHoy,
   fechaLarga,
@@ -56,14 +56,21 @@ export default function PlanPage() {
   }, [fecha]);
 
   useEffect(() => {
-    const u = getUser();
-    if (!u || !u.onboardingCompleto) {
-      router.replace('/onboarding');
-      return;
-    }
-    aplicarTema(u.tema);
-    setPerfil(u);
-    cargarDatos(u);
+    let cancelado = false;
+    (async () => {
+      const u = await getUserAsync();
+      if (cancelado) return;
+      if (!u || (u.onboardingCompleto === false)) {
+        router.replace('/onboarding');
+        return;
+      }
+      aplicarTema(u.tema);
+      setPerfil(u);
+      cargarDatos(u);
+    })();
+    return () => {
+      cancelado = true;
+    };
   }, [router, cargarDatos]);
 
   const generarPlan = async () => {

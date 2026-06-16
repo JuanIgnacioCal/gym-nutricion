@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Trash2, Plus, Search } from 'lucide-react';
 import type { Receta, TipoComida, UserProfile, AlimentoBusqueda } from '@/types';
-import { getUser, aplicarTema } from '@/lib/usuario';
+import { getUserAsync, aplicarTema } from '@/lib/usuario';
 import { fechaHoy, fechaLarga, slotsDe, sumarMacros, labelSlot } from '@/lib/util';
 import BottomNav from '@/components/BottomNav';
 import MacroBar from '@/components/MacroBar';
@@ -45,14 +45,21 @@ export default function RegistrarPage() {
   }, [fecha]);
 
   useEffect(() => {
-    const u = getUser();
-    if (!u || !u.onboardingCompleto) {
-      router.replace('/onboarding');
-      return;
-    }
-    aplicarTema(u.tema);
-    setPerfil(u);
-    cargarRegistros(u);
+    let cancelado = false;
+    (async () => {
+      const u = await getUserAsync();
+      if (cancelado) return;
+      if (!u || u.onboardingCompleto === false) {
+        router.replace('/onboarding');
+        return;
+      }
+      aplicarTema(u.tema);
+      setPerfil(u);
+      cargarRegistros(u);
+    })();
+    return () => {
+      cancelado = true;
+    };
   }, [router, cargarRegistros]);
 
   // Búsqueda local de recetas (filtra por nombre con debounce simple).

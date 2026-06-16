@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { X, ClipboardList, Search, Pencil, Sun, Moon, ChefHat } from 'lucide-react';
 import type { UserProfile } from '@/types';
-import { getUser, saveUser, aplicarTema } from '@/lib/usuario';
+import { getUserAsync, saveUser, aplicarTema } from '@/lib/usuario';
 import { useGymConfig } from '@/lib/useGymConfig';
 import ObjetivosFields, { Objetivo } from './ObjetivosFields';
 import AgregarRecetaModal from './AgregarRecetaModal';
@@ -30,14 +30,21 @@ export default function HamburgerMenu({ abierto, onClose, onPerfilActualizado }:
 
   useEffect(() => {
     if (abierto) {
-      const u = getUser();
-      setPerfil(u);
-      if (u) {
-        setObjetivo(u.objetivo);
-        setNombre(u.nombre);
-        setEmail(u.email);
-      }
-      setEditandoObjetivos(false);
+      let cancelado = false;
+      (async () => {
+        const u = await getUserAsync();
+        if (cancelado) return;
+        setPerfil(u);
+        if (u) {
+          setObjetivo(u.objetivo);
+          setNombre(u.nombre);
+          setEmail(u.email);
+        }
+        setEditandoObjetivos(false);
+      })();
+      return () => {
+        cancelado = true;
+      };
     }
   }, [abierto]);
 

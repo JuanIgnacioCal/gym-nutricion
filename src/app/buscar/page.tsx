@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search } from 'lucide-react';
 import type { Receta, TipoComida, UserProfile, AlimentoBusqueda } from '@/types';
-import { getUser, aplicarTema } from '@/lib/usuario';
+import { getUserAsync, aplicarTema } from '@/lib/usuario';
 import { fechaHoy, slotsDe, labelSlot } from '@/lib/util';
 import BottomNav from '@/components/BottomNav';
 import RecipeCard from '@/components/RecipeCard';
@@ -25,13 +25,20 @@ export default function BuscarPage() {
   const fecha = fechaHoy();
 
   useEffect(() => {
-    const u = getUser();
-    if (!u || !u.onboardingCompleto) {
-      router.replace('/onboarding');
-      return;
-    }
-    aplicarTema(u.tema);
-    setPerfil(u);
+    let cancelado = false;
+    (async () => {
+      const u = await getUserAsync();
+      if (cancelado) return;
+      if (!u || u.onboardingCompleto === false) {
+        router.replace('/onboarding');
+        return;
+      }
+      aplicarTema(u.tema);
+      setPerfil(u);
+    })();
+    return () => {
+      cancelado = true;
+    };
   }, [router]);
 
   const buscar = async () => {

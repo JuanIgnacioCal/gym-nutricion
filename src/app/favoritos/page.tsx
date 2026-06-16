@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { X, Clock, Plus } from 'lucide-react';
 import type { Receta, TipoComida, UserProfile, AlimentoBusqueda } from '@/types';
-import { getUser, aplicarTema } from '@/lib/usuario';
+import { getUserAsync, aplicarTema } from '@/lib/usuario';
 import { fechaHoy, slotsDe, labelSlot, escalarPorGramos } from '@/lib/util';
 import BottomNav from '@/components/BottomNav';
 import MacroChips from '@/components/MacroChips';
@@ -48,14 +48,21 @@ export default function FavoritosPage() {
   }, []);
 
   useEffect(() => {
-    const u = getUser();
-    if (!u || !u.onboardingCompleto) {
-      router.replace('/onboarding');
-      return;
-    }
-    aplicarTema(u.tema);
-    setPerfil(u);
-    cargar(u);
+    let cancelado = false;
+    (async () => {
+      const u = await getUserAsync();
+      if (cancelado) return;
+      if (!u || u.onboardingCompleto === false) {
+        router.replace('/onboarding');
+        return;
+      }
+      aplicarTema(u.tema);
+      setPerfil(u);
+      cargar(u);
+    })();
+    return () => {
+      cancelado = true;
+    };
   }, [router, cargar]);
 
   const quitar = async (id: number) => {
