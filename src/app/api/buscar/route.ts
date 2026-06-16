@@ -1,7 +1,60 @@
 import { NextRequest, NextResponse } from 'next/server';
 import type { AlimentoBusqueda } from '@/types';
+import ingredientesData from '../../../../data/ingredientes.json';
 
 export const dynamic = 'force-dynamic';
+
+interface IngredienteLocal {
+  calorias: number;
+  proteinas: number;
+  carbohidratos: number;
+  grasas: number;
+  fibra: number;
+  porcion: string;
+  usda_fdcId: number;
+  usda_descripcion: string;
+  aproximado?: boolean;
+  nota?: string;
+}
+
+const INGREDIENTES_LOCAL = ingredientesData.ingredientes as Record<string, IngredienteLocal>;
+
+/** Quita acentos y pasa a minúsculas para poder comparar "pollo" con "Pollo" o "azúcar" con "azucar". */
+function normalizar(s: string): string {
+  return s
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .trim();
+}
+
+/**
+ * Busca en la base curada de ingredientes (data/ingredientes.json) por coincidencia
+ * parcial en español. Esta base tiene macros REALES tomados de USDA (ver usda_fdcId
+ * en cada entrada para auditar la fuente), no valores generados por IA.
+ */
+function buscarLocal(query: string): AlimentoBusqueda[] {
+  const q = normalizar(query);
+  if (!q) return [];
+  const resultados: AlimentoBusqueda[] = [];
+  for (const [nombre, datos] of Object.entries(INGREDIENTES_LOCAL)) {
+    const nombreNorm = normalizar(nombre);
+    if (nombreNorm.includes(q) || q.includes(nombreNorm)) {
+      resultados.push({
+        fuente: 'usda',
+        id: `local-${nombreNorm.replace(/\s+/g, '-')}`,
+        nombre: nombre.charAt(0).toUpperCase() + nombre.slice(1),
+        calorias: datos.calorias,
+        proteinas: datos.proteinas,
+        carbohidratos: datos.carbohidratos,
+        grasas: datos.grasas,
+        fibra: datos.fibra,
+        porcion: datos.porcion,
+      });
+    }
+  }
+  return resultados;
+}
 
 const NUTR = { kcal: 1008, prot: 1003, carbs: 1005, grasas: 1004, fibra: 1079 };
 
@@ -58,21 +111,19 @@ function normalizarOFF(p: any): AlimentoBusqueda | null {
   };
 }
 
-function tieneAcento(s: string): boolean {
-  return /[áéíóúñü]/i.test(s);
-}
-
 /** GET /api/buscar?query= → alimentos normalizados por 100g (USDA + Open Food Facts). */
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const query = (searchParams.get('query') ?? '').trim();
   if (!query) return NextResponse.json([]);
 
-  const resultados: AlimentoBusqueda[] = [];
+  // --- Base curada en español (siempre primero, son macros reales ya verificados) ---
+  const resultados: AlimentoBusqueda[] = buscarLocal(query);
+  const idsLocales = new Set(resultados.map((r) => r.nombre.toLowerCase()));
 
-  // --- USDA ---
+  // --- USDA (solo si la base local no alcanzó para dar variedad) ---
   const key = process.env.USDA_API_KEY;
-  if (key && key !== 'TU_API_KEY_AQUI') {
+  if (resultados.length < 3 && key && key !== 'TU_API_KEY_AQUI') {
     try {
       const url =
         `https://api.nal.usda.gov/fdc/v1/foods/search?query=${encodeURIComponent(query)}` +

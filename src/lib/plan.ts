@@ -32,18 +32,51 @@ function candidatasTipo(db: Database.Database, slot: TipoComida, excluir: number
   return filas.filter((r) => !excluir.includes(r.id));
 }
 
-function masCercana(cands: RecetaRow[], objetivoKcal: number): RecetaRow {
-  return cands.reduce((mejor, r) =>
-    Math.abs(r.calorias - objetivoKcal) < Math.abs(mejor.calorias - objetivoKcal) ? r : mejor
-  );
+interface MacrosBase {
+  calorias: number;
+  proteinas: number;
+  carbohidratos: number;
+  grasas: number;
+}
+
+/** Objetivo de macros para una sola comida (ya dividido por la cantidad de comidas del día). */
+export interface ObjetivoComida {
+  calorias: number;
+  proteinas?: number;
+  carbohidratos?: number;
+  grasas?: number;
 }
 
 const RANGO = 0.4;
+// La proteína pesa un poco más al puntuar: es el macro que más le importa al socio del gym
+// y el que suele quedar más desbalanceado si solo se mira calorías.
+const PESO_PROTEINA = 1.2;
+
+/** Error relativo |valor - objetivo| / objetivo. Si no hay objetivo definido, no penaliza. */
+function errorRelativo(valor: number, objetivo?: number): number {
+  if (!objetivo || objetivo <= 0) return 0;
+  return Math.abs(valor - objetivo) / objetivo;
+}
+
+/** Puntaje de desbalance de una receta contra el objetivo de la comida (más bajo = mejor). */
+function puntuarReceta(r: MacrosBase, obj: ObjetivoComida): number {
+  return (
+    errorRelativo(r.calorias, obj.calorias) +
+    errorRelativo(r.proteinas, obj.proteinas) * PESO_PROTEINA +
+    errorRelativo(r.carbohidratos, obj.carbohidratos) +
+    errorRelativo(r.grasas, obj.grasas)
+  );
+}
+
+/** Las `n` candidatas mejor balanceadas (no solo la más cercana en calorías). */
+function topCandidatas(cands: RecetaRow[], obj: ObjetivoComida, n: number): RecetaRow[] {
+  return [...cands].sort((a, b) => puntuarReceta(a, obj) - puntuarReceta(b, obj)).slice(0, Math.max(1, n));
+}
 
 export function seleccionarReceta(
   db: Database.Database,
   slot: TipoComida,
-  kcalObjetivo: number,
+  objetivoComida: ObjetivoComida,
   excluir: number[] = []
 ): Receta | null {
   let cands = candidatasTipo(db, slot, excluir);
@@ -52,48 +85,111 @@ export function seleccionarReceta(
     cands = todas.filter((r) => !excluir.includes(r.id));
   }
   if (cands.length === 0) return null;
-  const min = kcalObjetivo * (1 - RANGO);
-  const max = kcalObjetivo * (1 + RANGO);
+
+  const min = objetivoComida.calorias * (1 - RANGO);
+  const max = objetivoComida.calorias * (1 + RANGO);
   const enRango = cands.filter((r) => r.calorias >= min && r.calorias <= max);
-  const elegida = enRango.length > 0 ? elegirAlAzar(enRango) : masCercana(cands, kcalObjetivo);
+  const pool = enRango.length > 0 ? enRango : cands;
+
+  // Entre las mejores candidatas por balance de macros (no solo calorías), elegimos
+  // al azar para mantener variedad sin perder precisión nutricional.
+  const mejores = topCandidatas(pool, objetivoComida, Math.min(3, pool.length));
+  const elegida = elegirAlAzar(mejores);
   return rowToReceta(elegida);
 }
 
 export interface ObjetivoPlan {
   calorias: number;
   comidas: number;
+  proteinas?: number;
+  carbohidratos?: number;
+  grasas?: number;
 }
 
-function totalKcal(plan: Partial<Record<TipoComida, Receta>>): number {
-  return Object.values(plan).reduce((s, r) => s + (r?.calorias ?? 0), 0);
+function totalMacros(plan: Partial<Record<TipoComida, Receta>>): MacrosBase {
+  return Object.values(plan).reduce<MacrosBase>(
+    (acc, r) => {
+      if (!r) return acc;
+      acc.calorias += r.calorias;
+      acc.proteinas += r.proteinas;
+      acc.carbohidratos += r.carbohidratos;
+      acc.grasas += r.grasas;
+      return acc;
+    },
+    { calorias: 0, proteinas: 0, carbohidratos: 0, grasas: 0 }
+  );
 }
 
+/** Desviación total ponderada del plan respecto al objetivo diario completo (calorías + macros). */
+function desviacionTotal(totales: MacrosBase, objetivo: ObjetivoPlan): number {
+  return (
+    errorRelativo(totales.calorias, objetivo.calorias) +
+    errorRelativo(totales.proteinas, objetivo.proteinas) * PESO_PROTEINA +
+    errorRelativo(totales.carbohidratos, objetivo.carbohidratos) +
+    errorRelativo(totales.grasas, objetivo.grasas)
+  );
+}
+
+/**
+ * Ajusta el plan iterativamente para acercarlo al objetivo diario completo
+ * (calorías, proteínas, carbohidratos y grasas), no solo calorías.
+ * En cada vuelta detecta el slot que peor balanceado está y prueba reemplazarlo
+ * por la candidata que más reduzca la desviación total del día.
+ */
 function ajustarPlan(
   db: Database.Database,
   plan: Partial<Record<TipoComida, Receta>>,
   slots: TipoComida[],
-  objetivoCal: number
+  objetivo: ObjetivoPlan
 ): void {
+  const UMBRAL = 0.15;
+
   for (let iter = 0; iter < 8; iter++) {
-    const total = totalKcal(plan);
-    const gap = total - objetivoCal;
-    if (Math.abs(gap) / objetivoCal <= 0.15) return;
-    const sobra = gap > 0;
+    const totales = totalMacros(plan);
+    const desviacion = desviacionTotal(totales, objetivo);
+    if (desviacion <= UMBRAL) return;
+
     const slotsConReceta = slots.filter((s) => plan[s]);
-    const slotObjetivo = slotsConReceta.reduce((a, b) =>
-      sobra
-        ? (plan[b]!.calorias > plan[a]!.calorias ? b : a)
-        : (plan[b]!.calorias < plan[a]!.calorias ? b : a)
+    if (slotsConReceta.length === 0) return;
+
+    const objetivoComidaProm: ObjetivoComida = {
+      calorias: objetivo.calorias / slots.length,
+      proteinas: objetivo.proteinas ? objetivo.proteinas / slots.length : undefined,
+      carbohidratos: objetivo.carbohidratos ? objetivo.carbohidratos / slots.length : undefined,
+      grasas: objetivo.grasas ? objetivo.grasas / slots.length : undefined,
+    };
+
+    // El slot que peor puntúa contra su porción del objetivo es el candidato a reemplazar.
+    const slotObjetivo = slotsConReceta.reduce((peor, s) =>
+      puntuarReceta(plan[s]!, objetivoComidaProm) > puntuarReceta(plan[peor]!, objetivoComidaProm)
+        ? s
+        : peor
     );
+
     const actual = plan[slotObjetivo]!;
-    const deseado = actual.calorias - gap;
     const usados = slotsConReceta.map((s) => plan[s]!.id);
     const cands = candidatasTipo(db, slotObjetivo, usados);
     if (cands.length === 0) return;
-    const mejor = masCercana(cands, deseado);
-    const nuevoTotal = total - actual.calorias + mejor.calorias;
-    if (Math.abs(nuevoTotal - objetivoCal) >= Math.abs(gap)) return;
-    plan[slotObjetivo] = rowToReceta(mejor);
+
+    // Probamos cada candidata real y nos quedamos con la que más reduce la desviación total del día.
+    let mejorCand: RecetaRow | null = null;
+    let mejorDesviacion = desviacion;
+    for (const cand of cands) {
+      const totalesProbando: MacrosBase = {
+        calorias: totales.calorias - actual.calorias + cand.calorias,
+        proteinas: totales.proteinas - actual.proteinas + cand.proteinas,
+        carbohidratos: totales.carbohidratos - actual.carbohidratos + cand.carbohidratos,
+        grasas: totales.grasas - actual.grasas + cand.grasas,
+      };
+      const d = desviacionTotal(totalesProbando, objetivo);
+      if (d < mejorDesviacion) {
+        mejorDesviacion = d;
+        mejorCand = cand;
+      }
+    }
+
+    if (!mejorCand) return; // ninguna candidata mejora el balance: dejamos de iterar
+    plan[slotObjetivo] = rowToReceta(mejorCand);
   }
 }
 
@@ -114,14 +210,19 @@ function recetasRecientes(
   return new Set(filas.map((r) => r[col]));
 }
 
-/** Genera un plan completo: una receta por slot, sin repetir, ajustado al objetivo. */
+/** Genera un plan completo: una receta por slot, sin repetir, ajustado al objetivo (calorías + macros). */
 export function generarPlan(
   db: Database.Database,
   objetivo: ObjetivoPlan,
   usuario_id?: string
 ): Partial<Record<TipoComida, Receta>> {
   const slots = slotsParaComidas(objetivo.comidas);
-  const kcalPorComida = objetivo.calorias / objetivo.comidas;
+  const objetivoComida: ObjetivoComida = {
+    calorias: objetivo.calorias / objetivo.comidas,
+    proteinas: objetivo.proteinas ? objetivo.proteinas / objetivo.comidas : undefined,
+    carbohidratos: objetivo.carbohidratos ? objetivo.carbohidratos / objetivo.comidas : undefined,
+    grasas: objetivo.grasas ? objetivo.grasas / objetivo.comidas : undefined,
+  };
   const usadosHoy: number[] = [];
   const plan: Partial<Record<TipoComida, Receta>> = {};
 
@@ -129,11 +230,11 @@ export function generarPlan(
     const recientes = usuario_id ? recetasRecientes(db, usuario_id, slot) : new Set<number>();
     const excluir = [...usadosHoy, ...Array.from(recientes)];
 
-    let receta = seleccionarReceta(db, slot, kcalPorComida, excluir);
+    let receta = seleccionarReceta(db, slot, objetivoComida, excluir);
 
     // Si todas las candidatas estaban en historial, ignorar historial para ese slot
     if (!receta && recientes.size > 0) {
-      receta = seleccionarReceta(db, slot, kcalPorComida, usadosHoy);
+      receta = seleccionarReceta(db, slot, objetivoComida, usadosHoy);
     }
 
     if (receta) {
@@ -142,6 +243,6 @@ export function generarPlan(
     }
   }
 
-  ajustarPlan(db, plan, slots, objetivo.calorias);
+  ajustarPlan(db, plan, slots, objetivo);
   return plan;
 }

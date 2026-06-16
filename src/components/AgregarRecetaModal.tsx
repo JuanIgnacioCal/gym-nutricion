@@ -119,13 +119,13 @@ export default function AgregarRecetaModal({ onClose, onGuardada }: AgregarRecet
 
           {/* Buscar ingrediente */}
           <div>
-            <span className="text-sm" style={{ color: 'var(--color-texto-sec)' }}>Agregar ingredientes (buscá en USDA)</span>
+            <span className="text-sm" style={{ color: 'var(--color-texto-sec)' }}>Agregar ingredientes</span>
             <div className="mt-1 flex gap-2">
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && buscar()}
-                placeholder="Ej: rice, chicken, banana..."
+                placeholder="Ej: arroz, pollo, banana..."
                 className="w-full rounded-btn px-3 py-2.5 outline-none"
                 style={{ background: 'var(--color-superficie-alt)', border: '1px solid var(--color-borde)', color: 'var(--color-texto)' }}
               />

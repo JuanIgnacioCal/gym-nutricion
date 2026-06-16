@@ -27,6 +27,9 @@ export async function GET(req: NextRequest) {
   const fecha = searchParams.get('fecha');
   const calorias = Number(searchParams.get('calorias') ?? 2000);
   const comidas = Number(searchParams.get('comidas') ?? 3);
+  const proteinas = searchParams.get('proteinas') ? Number(searchParams.get('proteinas')) : undefined;
+  const carbohidratos = searchParams.get('carbohidratos') ? Number(searchParams.get('carbohidratos')) : undefined;
+  const grasas = searchParams.get('grasas') ? Number(searchParams.get('grasas')) : undefined;
 
   if (!slot || !SLOTS.includes(slot) || !usuario_id || !fecha) {
     return NextResponse.json({ error: 'Parámetros inválidos' }, { status: 400 });
@@ -45,8 +48,14 @@ export async function GET(req: NextRequest) {
     (x): x is number => x != null
   );
 
-  const kcalPorComida = calorias / (comidas || 1);
-  const nueva = seleccionarReceta(db, slot, kcalPorComida, usados);
+  const n = comidas || 1;
+  const objetivoComida = {
+    calorias: calorias / n,
+    proteinas: proteinas ? proteinas / n : undefined,
+    carbohidratos: carbohidratos ? carbohidratos / n : undefined,
+    grasas: grasas ? grasas / n : undefined,
+  };
+  const nueva = seleccionarReceta(db, slot, objetivoComida, usados);
 
   if (!nueva) {
     return NextResponse.json({ error: 'Sin recetas alternativas disponibles' }, { status: 404 });

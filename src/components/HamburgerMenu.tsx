@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { X, ClipboardList, Search, Pencil, Sun, Moon, ChefHat } from 'lucide-react';
+import { X, ClipboardList, Search, Pencil, Sun, Moon, ChefHat, Apple } from 'lucide-react';
 import type { UserProfile } from '@/types';
 import { getUserAsync, saveUser, aplicarTema } from '@/lib/usuario';
 import { useGymConfig } from '@/lib/useGymConfig';
@@ -142,7 +142,7 @@ export default function HamburgerMenu({ abierto, onClose, onPerfilActualizado }:
                   className="flex items-center gap-3 rounded-btn px-3 py-3 text-left text-sm"
                   style={{ background: 'var(--color-superficie-alt)' }}
                 >
-                  <Search size={18} style={{ color: 'var(--color-primario)' }} /> Buscar macros
+                  <Search size={18} style={{ color: 'var(--color-primario)' }} /> Buscar receta
                 </button>
                 <button
                   onClick={() => setAgregarReceta(true)}
@@ -150,6 +150,13 @@ export default function HamburgerMenu({ abierto, onClose, onPerfilActualizado }:
                   style={{ background: 'var(--color-superficie-alt)' }}
                 >
                   <ChefHat size={18} style={{ color: 'var(--color-primario)' }} /> Agregar mi receta
+                </button>
+                <button
+                  onClick={() => irA('/alimento')}
+                  className="flex items-center gap-3 rounded-btn px-3 py-3 text-left text-sm"
+                  style={{ background: 'var(--color-superficie-alt)' }}
+                >
+                  <Apple size={18} style={{ color: 'var(--color-primario)' }} /> Buscar macros de un alimento
                 </button>
               </div>
             </section>

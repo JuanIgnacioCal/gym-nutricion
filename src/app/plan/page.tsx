@@ -94,7 +94,9 @@ export default function PlanPage() {
     try {
       const res = await fetch(
         `/api/plan/cambiar?slot=${slot}&usuario_id=${perfil.id}&fecha=${fecha}` +
-          `&calorias=${perfil.objetivo.calorias}&comidas=${perfil.objetivo.comidas}`
+          `&calorias=${perfil.objetivo.calorias}&comidas=${perfil.objetivo.comidas}` +
+          `&proteinas=${perfil.objetivo.proteinas}&carbohidratos=${perfil.objetivo.carbohidratos}` +
+          `&grasas=${perfil.objetivo.grasas}`
       );
       if (res.ok) {
         const nueva: Receta = await res.json();

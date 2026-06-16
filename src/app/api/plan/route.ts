@@ -67,7 +67,13 @@ export async function POST(req: NextRequest) {
 
   const plan = generarPlan(
     db,
-    { calorias: Number(objetivo.calorias) || 2000, comidas: Number(objetivo.comidas) || 3 },
+    {
+      calorias: Number(objetivo.calorias) || 2000,
+      comidas: Number(objetivo.comidas) || 3,
+      proteinas: objetivo.proteinas ? Number(objetivo.proteinas) : undefined,
+      carbohidratos: objetivo.carbohidratos ? Number(objetivo.carbohidratos) : undefined,
+      grasas: objetivo.grasas ? Number(objetivo.grasas) : undefined,
+    },
     usuario_id,
   );
 

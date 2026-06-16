@@ -2,8 +2,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronRight } from 'lucide-react';
-import type { UserProfile, NivelActividad, ObjetivoTipo, Sexo } from '@/types';
-import { saveUser, clearUserLocal } from '@/lib/usuario';
+import type { NivelActividad, ObjetivoTipo, Sexo } from '@/types';
+import { clearUserLocal } from '@/lib/usuario';
 import { useGymConfig } from '@/lib/useGymConfig';
 import type { Objetivo } from '@/components/ObjetivosFields';
 
@@ -62,6 +62,7 @@ export default function OnboardingPage() {
   const [paso, setPaso] = useState(1);
   const [nombre, setNombre] = useState('');
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [peso, setPeso] = useState('');
   const [altura, setAltura] = useState('');
   const [edad, setEdad] = useState('');
@@ -91,6 +92,13 @@ export default function OnboardingPage() {
 
   const finalizar = async () => {
     if (guardando) return;
+    // Email + contraseña son obligatorios: la cuenta vive en la DB y el middleware
+    // exige la cookie de sesión para entrar a la app.
+    if (!email.trim() || password.length < 6) {
+      setErrorReg('Necesitás un email y una contraseña de al menos 6 caracteres.');
+      setPaso(2);
+      return;
+    }
     setGuardando(true);
     setErrorReg('');
 
@@ -98,50 +106,36 @@ export default function OnboardingPage() {
       ? { peso: Number(peso), altura: Number(altura), edad: Number(edad), sexo, nivel_actividad: actividad, objetivo_tipo: objetivoTipo }
       : undefined;
 
-    // Si el usuario ingreso email, intentamos registrarlo en la DB
-    if (email.trim()) {
-      try {
-        const res = await fetch('/api/auth/registro', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            nombre: nombre.trim() || 'Atleta',
-            email: email.trim(),
-            password: crypto.randomUUID().slice(0, 12), // temp password - el usuario puede cambiarla despues
-            objetivo,
-            datos_fisicos,
-          }),
-        });
-        if (res.ok) {
-          clearUserLocal();
-          router.replace('/plan');
-          return;
-        }
-        const err = await res.json().catch(() => ({}));
-        // Si ya existe, igual mandamos al plan (puede que ya este logueado)
-        if (res.status === 409) {
-          router.replace('/plan');
-          return;
-        }
-        setErrorReg(err.error ?? 'Error al registrar. Continuar de todas formas.');
-      } catch {
-        setErrorReg('Sin conexion. Guardando localmente.');
+    try {
+      const res = await fetch('/api/auth/registro', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nombre: nombre.trim() || 'Atleta',
+          email: email.trim(),
+          password,
+          objetivo,
+          datos_fisicos,
+        }),
+      });
+      if (res.ok) {
+        // La cuenta y la cookie de sesión ya quedaron creadas por el endpoint.
+        clearUserLocal();
+        router.replace('/plan');
+        return;
       }
+      if (res.status === 409) {
+        setErrorReg('Ya existe una cuenta con ese email. Te llevamos a iniciar sesión…');
+        setTimeout(() => router.replace('/login'), 1200);
+        return;
+      }
+      const err = await res.json().catch(() => ({}));
+      setErrorReg(err.error ?? 'No pudimos crear tu cuenta. Probá de nuevo.');
+      setGuardando(false);
+    } catch {
+      setErrorReg('Sin conexión. Revisá tu internet e intentá de nuevo.');
+      setGuardando(false);
     }
-
-    // Fallback: guardar en localStorage como antes
-    const perfil: UserProfile = {
-      id: crypto.randomUUID(),
-      nombre: nombre.trim() || 'Atleta',
-      email: email.trim(),
-      datos_fisicos,
-      objetivo,
-      tema: 'oscuro',
-      onboardingCompleto: true,
-    };
-    saveUser(perfil);
-    setGuardando(false);
-    router.replace('/plan');
   };
 
   return (
@@ -165,6 +159,10 @@ export default function OnboardingPage() {
             <p className="font-medium" style={{ color: 'var(--color-primario)' }}>{gym.tagline}</p>
             <p className="text-sm" style={{ color: 'var(--color-texto-sec)' }}>Tu plan de nutricion personalizado</p>
             <Boton onClick={() => setPaso(2)}>Empezar</Boton>
+            <button type="button" onClick={() => router.push('/login')}
+              className="text-sm" style={{ color: 'var(--color-texto-sec)' }}>
+              Ya tengo cuenta · <span style={{ color: 'var(--color-primario)', fontWeight: 600 }}>Iniciar sesión</span>
+            </button>
           </div>
         )}
 
@@ -177,10 +175,15 @@ export default function OnboardingPage() {
             </Campo>
             <Campo label="Email">
               <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-                placeholder="juan@email.com" className="input-base" />
+                placeholder="juan@email.com" autoComplete="email" className="input-base" />
+            </Campo>
+            <Campo label="Contraseña">
+              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)}
+                placeholder="Mínimo 6 caracteres" autoComplete="new-password" className="input-base" />
             </Campo>
             <div className="mt-auto">
-              <Boton onClick={() => setPaso(3)} disabled={!nombre.trim()}>Continuar</Boton>
+              <Boton onClick={() => setPaso(3)}
+                disabled={!nombre.trim() || !email.trim() || password.length < 6}>Continuar</Boton>
             </div>
           </div>
         )}
@@ -296,8 +299,13 @@ export default function OnboardingPage() {
               <Resumen label="Carbohidratos" valor={objetivo.carbohidratos + ' g'} />
               <Resumen label="Grasas" valor={objetivo.grasas + ' g'} />
             </div>
+            {errorReg && (
+              <p className="text-sm text-center" style={{ color: 'var(--color-error)' }}>{errorReg}</p>
+            )}
             <div className="mt-auto pt-4">
-              <Boton onClick={finalizar}>Ver mi plan de hoy</Boton>
+              <Boton onClick={finalizar} disabled={guardando}>
+                {guardando ? 'Creando tu cuenta…' : 'Ver mi plan de hoy'}
+              </Boton>
             </div>
           </div>
         )}
