@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import getDb from '@/lib/db';
 import { rowToReceta, RecetaRow } from '@/lib/recetas';
+import { getSesion } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -50,6 +51,9 @@ export async function GET(req: NextRequest) {
  *         calorias, proteinas, carbohidratos, grasas, fibra, ingredientes: string[] }
  */
 export async function POST(req: NextRequest) {
+  const sesion = getSesion();
+  if (!sesion) return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
+
   const db = getDb();
   const b = await req.json();
 

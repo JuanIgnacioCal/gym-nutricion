@@ -1,7 +1,11 @@
 import jwt from 'jsonwebtoken';
 import { cookies } from 'next/headers';
 
-const SECRET = process.env.JWT_SECRET ?? 'dev-secret-cambiar-en-produccion';
+const SECRET: string = process.env.JWT_SECRET ?? (() => {
+  throw new Error(
+    'JWT_SECRET no está definida: es obligatoria para firmar las sesiones de forma segura. Seteala en las variables de entorno.'
+  );
+})();
 const COOKIE = 'auth_token';
 const EXPIRY = 60 * 60 * 24 * 30; // 30 dias en segundos
 

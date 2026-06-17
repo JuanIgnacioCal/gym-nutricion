@@ -5238,34 +5238,6 @@
     "calificacion": 5.0
   },
   {
-    "id": 200,
-    "nombre": "Ensalada de pasta integral con pollo y vegetales",
-    "nombre_original": "Ensalada de pasta integral con pollo y vegetales",
-    "origen": "argentina",
-    "tipo_comida": "almuerzo/cena",
-    "categoria": "alta_proteina",
-    "calorias": 498,
-    "proteinas": 38.5,
-    "carbohidratos": 45.0,
-    "grasas": 15.0,
-    "fibra": 6.2,
-    "porciones": 1,
-    "tiempo_preparacion": 10,
-    "tiempo_coccion": 15,
-    "tiempo_total": 25,
-    "ingredientes": [
-      "150g pechuga de pollo a la plancha",
-      "160g fideos integrales cocidos",
-      "1 tomate",
-      "1/2 morrón rojo",
-      "pepino",
-      "aceite de oliva",
-      "limón y orégano"
-    ],
-    "url_original": "",
-    "calificacion": 5.0
-  },
-  {
     "nombre": "Muffins de Huevo con Tomate, Albahaca y Espinacas",
     "nombre_original": "Muffins de Huevo con Tomate, Albahaca y Espinacas",
     "origen": "libro_recetas",
