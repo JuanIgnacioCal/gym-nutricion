@@ -1,13 +1,20 @@
 import Database from 'better-sqlite3';
+import fs from 'fs';
 import path from 'path';
 import { seedRecetas } from './seed';
 
-const DB_PATH = path.join(process.cwd(), 'gym-nutrition.db');
+// Ruta de la DB configurable por entorno.
+// - Local: si DATABASE_PATH no está seteada, usa ./gym-nutrition.db (igual que antes).
+// - Producción (Railway): apuntar DATABASE_PATH a un Volume persistente
+//   (ej. /data/gym-nutrition.db) para que los datos NO se borren en cada deploy.
+const DB_PATH = process.env.DATABASE_PATH || path.join(process.cwd(), 'gym-nutrition.db');
 
 let db: Database.Database;
 
 function getDb(): Database.Database {
   if (!db) {
+    // Asegura que el directorio destino exista (necesario para el Volume montado).
+    fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
     db = new Database(DB_PATH);
     db.pragma('journal_mode = WAL');
     initSchema(db);

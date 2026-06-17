@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import getDb from '@/lib/db';
 import { seleccionarReceta } from '@/lib/plan';
+import { getSesion } from '@/lib/auth';
 import type { TipoComida } from '@/types';
 
 export const dynamic = 'force-dynamic';
@@ -20,10 +21,13 @@ interface PlanRow {
  * Reemplaza solo ese slot por otra receta y devuelve la nueva.
  */
 export async function GET(req: NextRequest) {
+  const sesion = getSesion();
+  if (!sesion) return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
+  const usuario_id = sesion.sub;
+
   const db = getDb();
   const { searchParams } = new URL(req.url);
   const slot = searchParams.get('slot') as TipoComida | null;
-  const usuario_id = searchParams.get('usuario_id');
   const fecha = searchParams.get('fecha');
   const calorias = Number(searchParams.get('calorias') ?? 2000);
   const comidas = Number(searchParams.get('comidas') ?? 3);
@@ -31,7 +35,7 @@ export async function GET(req: NextRequest) {
   const carbohidratos = searchParams.get('carbohidratos') ? Number(searchParams.get('carbohidratos')) : undefined;
   const grasas = searchParams.get('grasas') ? Number(searchParams.get('grasas')) : undefined;
 
-  if (!slot || !SLOTS.includes(slot) || !usuario_id || !fecha) {
+  if (!slot || !SLOTS.includes(slot) || !fecha) {
     return NextResponse.json({ error: 'Parámetros inválidos' }, { status: 400 });
   }
 

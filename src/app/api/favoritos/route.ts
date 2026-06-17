@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import getDb from '@/lib/db';
 import { rowToReceta, RecetaRow } from '@/lib/recetas';
+import { getSesion } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,14 +16,13 @@ interface FavRow {
 
 /** GET /api/favoritos?usuario_id=&tipo= → lista de favoritos (con receta o alimento embebido). */
 export async function GET(req: NextRequest) {
+  const sesion = getSesion();
+  if (!sesion) return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
+  const usuario_id = sesion.sub;
+
   const db = getDb();
   const { searchParams } = new URL(req.url);
-  const usuario_id = searchParams.get('usuario_id');
   const tipo = searchParams.get('tipo');
-
-  if (!usuario_id) {
-    return NextResponse.json({ error: 'Falta usuario_id' }, { status: 400 });
-  }
 
   const where = ['usuario_id = ?'];
   const params: (string | number)[] = [usuario_id];
@@ -56,10 +56,12 @@ export async function GET(req: NextRequest) {
 
 /** POST /api/favoritos → crea un favorito (receta o alimento personalizado). */
 export async function POST(req: NextRequest) {
+  const sesion = getSesion();
+  if (!sesion) return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
+  const usuario_id = sesion.sub;
+
   const db = getDb();
   const b = await req.json();
-  const usuario_id = b?.usuario_id;
-  if (!usuario_id) return NextResponse.json({ error: 'Falta usuario_id' }, { status: 400 });
 
   const tipo = b.tipo === 'personalizado' ? 'personalizado' : 'receta';
 
@@ -91,11 +93,21 @@ export async function POST(req: NextRequest) {
 
 /** DELETE /api/favoritos?id= → elimina un favorito. */
 export async function DELETE(req: NextRequest) {
+  const sesion = getSesion();
+  if (!sesion) return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
+  const usuario_id = sesion.sub;
+
   const db = getDb();
   const { searchParams } = new URL(req.url);
   const id = searchParams.get('id');
   if (!id) return NextResponse.json({ error: 'Falta id' }, { status: 400 });
 
-  db.prepare('DELETE FROM favoritos WHERE id = ?').run(Number(id));
+  // Solo borra si el favorito pertenece al usuario de la sesión.
+  const info = db
+    .prepare('DELETE FROM favoritos WHERE id = ? AND usuario_id = ?')
+    .run(Number(id), usuario_id);
+  if (info.changes === 0) {
+    return NextResponse.json({ error: 'No encontrado' }, { status: 404 });
+  }
   return NextResponse.json({ ok: true });
 }

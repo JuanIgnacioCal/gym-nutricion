@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import getDb from '@/lib/db';
 import { rowToReceta, RecetaRow } from '@/lib/recetas';
 import { generarPlan } from '@/lib/plan';
+import { getSesion } from '@/lib/auth';
 import type { Receta, TipoComida } from '@/types';
 
 export const dynamic = 'force-dynamic';
@@ -39,13 +40,16 @@ function planRowToJSON(db: ReturnType<typeof getDb>, row: PlanRow | undefined) {
 
 /** GET /api/plan?usuario_id=&fecha= → plan del día (o null). */
 export async function GET(req: NextRequest) {
+  const sesion = getSesion();
+  if (!sesion) return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
+  const usuario_id = sesion.sub;
+
   const db = getDb();
   const { searchParams } = new URL(req.url);
-  const usuario_id = searchParams.get('usuario_id');
   const fecha = searchParams.get('fecha');
 
-  if (!usuario_id || !fecha) {
-    return NextResponse.json({ error: 'Faltan usuario_id o fecha' }, { status: 400 });
+  if (!fecha) {
+    return NextResponse.json({ error: 'Falta fecha' }, { status: 400 });
   }
 
   const row = db
@@ -57,12 +61,16 @@ export async function GET(req: NextRequest) {
 
 /** POST /api/plan { usuario_id, fecha, objetivo } → genera y guarda un plan nuevo. */
 export async function POST(req: NextRequest) {
+  const sesion = getSesion();
+  if (!sesion) return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
+  const usuario_id = sesion.sub;
+
   const db = getDb();
   const body = await req.json();
-  const { usuario_id, fecha, objetivo } = body ?? {};
+  const { fecha, objetivo } = body ?? {};
 
-  if (!usuario_id || !fecha || !objetivo) {
-    return NextResponse.json({ error: 'Faltan datos (usuario_id, fecha, objetivo)' }, { status: 400 });
+  if (!fecha || !objetivo) {
+    return NextResponse.json({ error: 'Faltan datos (fecha, objetivo)' }, { status: 400 });
   }
 
   const plan = generarPlan(
@@ -101,11 +109,15 @@ export async function POST(req: NextRequest) {
  * Asigna una receta concreta a un slot (crea el plan del día si no existe).
  */
 export async function PATCH(req: NextRequest) {
+  const sesion = getSesion();
+  if (!sesion) return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
+  const usuario_id = sesion.sub;
+
   const db = getDb();
   const b = await req.json();
-  const { usuario_id, fecha, slot, receta_id } = b ?? {};
+  const { fecha, slot, receta_id } = b ?? {};
 
-  if (!usuario_id || !fecha || !slot || !SLOTS.includes(slot)) {
+  if (!fecha || !slot || !SLOTS.includes(slot)) {
     return NextResponse.json({ error: 'Parámetros inválidos' }, { status: 400 });
   }
 

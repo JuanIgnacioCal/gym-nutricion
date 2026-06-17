@@ -1,17 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import getDb from '@/lib/db';
+import { getSesion } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
 /** GET /api/registro?usuario_id=&fecha= → registros del día. */
 export async function GET(req: NextRequest) {
+  const sesion = getSesion();
+  if (!sesion) return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
+  const usuario_id = sesion.sub;
+
   const db = getDb();
   const { searchParams } = new URL(req.url);
-  const usuario_id = searchParams.get('usuario_id');
   const fecha = searchParams.get('fecha');
 
-  if (!usuario_id || !fecha) {
-    return NextResponse.json({ error: 'Faltan usuario_id o fecha' }, { status: 400 });
+  if (!fecha) {
+    return NextResponse.json({ error: 'Falta fecha' }, { status: 400 });
   }
 
   const rows = db
@@ -27,10 +31,14 @@ export async function GET(req: NextRequest) {
 
 /** POST /api/registro → crea un registro de comida. */
 export async function POST(req: NextRequest) {
+  const sesion = getSesion();
+  if (!sesion) return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
+  const usuario_id = sesion.sub;
+
   const db = getDb();
   const b = await req.json();
 
-  const required = ['usuario_id', 'fecha', 'tipo_comida', 'nombre_comida'];
+  const required = ['fecha', 'tipo_comida', 'nombre_comida'];
   for (const k of required) {
     if (!b?.[k]) return NextResponse.json({ error: `Falta ${k}` }, { status: 400 });
   }
@@ -43,7 +51,7 @@ export async function POST(req: NextRequest) {
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     )
     .run(
-      b.usuario_id,
+      usuario_id,
       b.fecha,
       b.tipo_comida,
       b.receta_id ?? null,
@@ -62,11 +70,21 @@ export async function POST(req: NextRequest) {
 
 /** DELETE /api/registro?id= → elimina un registro. */
 export async function DELETE(req: NextRequest) {
+  const sesion = getSesion();
+  if (!sesion) return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
+  const usuario_id = sesion.sub;
+
   const db = getDb();
   const { searchParams } = new URL(req.url);
   const id = searchParams.get('id');
   if (!id) return NextResponse.json({ error: 'Falta id' }, { status: 400 });
 
-  db.prepare('DELETE FROM registro_diario WHERE id = ?').run(Number(id));
+  // Solo borra si el registro pertenece al usuario de la sesión.
+  const info = db
+    .prepare('DELETE FROM registro_diario WHERE id = ? AND usuario_id = ?')
+    .run(Number(id), usuario_id);
+  if (info.changes === 0) {
+    return NextResponse.json({ error: 'No encontrado' }, { status: 404 });
+  }
   return NextResponse.json({ ok: true });
 }
