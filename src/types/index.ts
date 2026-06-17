@@ -67,6 +67,8 @@ export interface Receta {
   tiempo_coccion: number;
   tiempo_total: number;
   ingredientes: string[];
+  /** Pasos de preparación. Se cargan desde data/pasos.json por id de receta. */
+  pasos?: string[];
   url_original: string;
   calificacion: number;
 }

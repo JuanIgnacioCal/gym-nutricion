@@ -122,7 +122,26 @@ export default function RecipeDetailModal({
           {/* Preparación */}
           <div>
             <h3 className="font-semibold text-sm mb-2">Preparación</h3>
-            {receta.url_original ? (
+            {receta.pasos && receta.pasos.length > 0 ? (
+              <ol className="space-y-2">
+                {receta.pasos.map((paso, i) => (
+                  <li key={i} className="flex gap-2.5 text-sm">
+                    <span
+                      className="shrink-0 inline-flex items-center justify-center rounded-full text-xs font-bold"
+                      style={{
+                        width: 20,
+                        height: 20,
+                        background: 'var(--color-primario)',
+                        color: 'var(--color-sobre-primario)',
+                      }}
+                    >
+                      {i + 1}
+                    </span>
+                    <span>{paso}</span>
+                  </li>
+                ))}
+              </ol>
+            ) : receta.url_original ? (
               <a
                 href={receta.url_original}
                 target="_blank"

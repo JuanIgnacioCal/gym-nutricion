@@ -1,0 +1,81 @@
+{
+  "_comentario": "Pasos de preparación por id de receta (español rioplatense). Se mergean con data/recetas.json por id. Los pasos son texto orientativo, no dato nutricional: se pueden generar con IA y revisar. Los MACROS NO van acá: esos viven en recetas.json y deben ser reales (ver GUIA_RECETAS.md).",
+  "pasos": {
+    "1": [
+      "Poné el yogur griego en un bol.",
+      "Sumá la avena y mezclá.",
+      "Cortá la banana en rodajas y agregala encima.",
+      "Terminá con un hilo de miel."
+    ],
+    "2": [
+      "Batí las claras con una pizca de sal.",
+      "Calentá el aceite en una sartén antiadherente y salteá la espinaca 1 minuto.",
+      "Volcá las claras y cociná a fuego medio hasta que cuajen.",
+      "Sumá el queso, plegá la omelette y serví."
+    ],
+    "3": [
+      "Tostá el pan integral.",
+      "Batí los huevos con sal y pimienta.",
+      "Calentá el aceite y revolvé los huevos a fuego medio hasta que queden cremosos.",
+      "Serví el revuelto sobre las tostadas."
+    ],
+    "4": [
+      "Calentá la leche en una olla.",
+      "Agregá la avena y cociná 3-4 minutos revolviendo hasta espesar.",
+      "Serví en un bol, sumá la banana en rodajas y espolvoreá canela."
+    ],
+    "5": [
+      "Poné la leche, la banana, la avena y el yogur en la licuadora.",
+      "Licuá hasta que quede homogéneo.",
+      "Serví bien frío (podés agregar hielo)."
+    ],
+    "6": [
+      "Picá la cebolla y el tomate en cubos chicos.",
+      "Calentá el aceite y rehogá la cebolla hasta que esté transparente.",
+      "Sumá el tomate y cociná 2 minutos.",
+      "Batí los huevos con las claras, volcá en la sartén y revolvé hasta cuajar."
+    ],
+    "7": [
+      "Tostá el pan integral.",
+      "Untá el queso cremoso sobre las tostadas.",
+      "Cubrí con rodajas de tomate, salpimentá y serví."
+    ],
+    "8": [
+      "Colocá el yogur en un bol.",
+      "Sumá la avena y mezclá.",
+      "Cortá las frutillas y agregalas encima.",
+      "Terminá con un hilo de miel."
+    ],
+    "9": [
+      "Pisá la banana y mezclala con los huevos y la avena molida hasta formar una pasta.",
+      "Calentá una sartén con un poco de aceite.",
+      "Volcá porciones y cociná 1-2 minutos de cada lado hasta dorar."
+    ],
+    "10": [
+      "Calentá la leche y agregá la avena.",
+      "Cociná 3-4 minutos revolviendo hasta espesar.",
+      "Serví en un bol, sumá la manzana en cubos y espolvoreá canela."
+    ],
+    "11": [
+      "Herví los huevos 10 minutos, enfrialos y pelalos.",
+      "Tostá el pan integral.",
+      "Cortá los huevos, salpimentá y serví con las tostadas."
+    ],
+    "12": [
+      "Batí los huevos con una pizca de sal.",
+      "Calentá el aceite en una sartén antiadherente.",
+      "Volcá los huevos y, cuando empiecen a cuajar, sumá el jamón y el queso.",
+      "Plegá la omelette y cociná hasta que el queso se funda."
+    ],
+    "13": [
+      "Poné el yogur, las frutillas, la leche y la miel en la licuadora.",
+      "Licuá hasta que quede cremoso.",
+      "Serví bien frío."
+    ],
+    "14": [
+      "Tostá el pan integral.",
+      "Untá la ricota sobre las tostadas.",
+      "Terminá con un hilo de miel."
+    ]
+  }
+}
