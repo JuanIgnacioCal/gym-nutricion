@@ -45,6 +45,12 @@ Quién: **[yo]** lo programo y vos pusheás · **[vos]** acción tuya (Railway/p
 
 ---
 
+## 🧪 Hallazgos del testeo (validados por vos, 2026-06-17)
+- **T1 — Falta variedad en el plan** · M · **[yo]**. Genera planes nuevos pero repite casi siempre las mismas recetas. Causa probable: el pool de candidatas dentro de ±40% kcal/comida es chico y el scoring de "mejor balance" converge a las mismas. Fix: elegir al azar dentro de un set más amplio en rango (no siempre las más cercanas) y/o ampliar el rango. **Ojo: hay tensión con T2** (más variedad ⇄ menos precisión de macros).
+- **T2 — No pega justo los objetivos** · M · **[yo]**. El total se acerca pero no llega exacto a las calorías/macros objetivo. Fix: más/mejores iteraciones de ajuste. En tensión con T1: hay que balancear, no maximizar uno solo.
+- **T3 — Registrar "comido" desde la tarjeta de la receta** · S · **[yo]**. Hoy solo se puede desde la sección Registrar. Agregar un botón "marqué que comí esto" en la tarjeta del plan. Quick win de comodidad.
+- **T4 — Buscador con pocos alimentos** · M/L · **[yo + decisión]**. "cebolla" no aparece; faltan alimentos comunes. La base curada propia tiene ~46 ítems y el fallback USDA es en inglés. Fix real: expandir la base con datos argentinos reales (Argenfoods/SARA) y ajustar el orden de búsqueda. **Regla del proyecto: macros reales, nunca inventados** → requiere conseguir/elegir la fuente. Es la tarea más grande de las cuatro.
+
 ## 🟢 Retención / valor (deseable, después del primer "sí")
 13. **Seguimiento de progreso del socio** · M · peso en el tiempo + gráficos (`recharts`) + racha de adherencia. Engancha y muestra resultados.
 14. **Lista de compras del plan** · M · los datos ya existen; alto valor percibido, bajo costo.

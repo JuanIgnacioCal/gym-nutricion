@@ -100,6 +100,15 @@ export default function RecipeDetailModal({
             ))}
           </div>
 
+          {typeof receta.escala === 'number' && Math.abs(receta.escala - 1) > 0.01 && (
+            <p className="text-xs -mt-1" style={{ color: 'var(--color-texto-sec)' }}>
+              Porción ajustada a tu objetivo:{' '}
+              <strong style={{ color: 'var(--color-acento)' }}>×{receta.escala}</strong>. Los macros
+              de arriba ya están ajustados; multiplicá las cantidades de los ingredientes por{' '}
+              {receta.escala}.
+            </p>
+          )}
+
           {/* Ingredientes */}
           <div>
             <h3 className="font-semibold text-sm mb-2">Ingredientes</h3>

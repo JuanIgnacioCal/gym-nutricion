@@ -69,6 +69,8 @@ export interface Receta {
   ingredientes: string[];
   /** Pasos de preparación. Se cargan desde data/pasos.json por id de receta. */
   pasos?: string[];
+  /** Factor de escala de porción aplicado en el plan (ej. 1.3 = 1.3 porciones). Solo en contexto de plan. */
+  escala?: number;
   url_original: string;
   calificacion: number;
 }

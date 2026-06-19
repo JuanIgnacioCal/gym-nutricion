@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
   const categoria = searchParams.get('categoria');
   const tipo = searchParams.get('tipo');
   const buscar = searchParams.get('buscar');
-  const limite = Number(searchParams.get('limite') ?? 200);
+  const limite = Math.min(Math.max(1, Number(searchParams.get('limite')) || 200), 500);
 
   const where: string[] = [];
   const params: (string | number)[] = [];

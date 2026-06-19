@@ -1,11 +1,6 @@
 import jwt from 'jsonwebtoken';
 import { cookies } from 'next/headers';
 
-const SECRET: string = process.env.JWT_SECRET ?? (() => {
-  throw new Error(
-    'JWT_SECRET no está definida: es obligatoria para firmar las sesiones de forma segura. Seteala en las variables de entorno.'
-  );
-})();
 const COOKIE = 'auth_token';
 const EXPIRY = 60 * 60 * 24 * 30; // 30 dias en segundos
 
@@ -14,13 +9,28 @@ export interface JwtPayload {
   email: string;
 }
 
+/**
+ * Secreto para firmar/verificar JWT. Se lee de forma PEREZOSA (no al importar el
+ * módulo) para no romper `next build`, que importa las rutas sin ejecutar los handlers.
+ * En producción es OBLIGATORIO (revienta si falta); en desarrollo local cae a un valor
+ * de prueba para no frenar el build ni el dev.
+ */
+function getSecret(): string {
+  const s = process.env.JWT_SECRET;
+  if (s) return s;
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('JWT_SECRET es obligatoria en producción: seteala en las variables de entorno.');
+  }
+  return 'dev-secret-solo-local-no-usar-en-produccion';
+}
+
 export function firmarToken(payload: JwtPayload): string {
-  return jwt.sign(payload, SECRET, { expiresIn: EXPIRY });
+  return jwt.sign(payload, getSecret(), { expiresIn: EXPIRY });
 }
 
 export function verificarToken(token: string): JwtPayload | null {
   try {
-    return jwt.verify(token, SECRET) as JwtPayload;
+    return jwt.verify(token, getSecret()) as JwtPayload;
   } catch {
     return null;
   }
@@ -37,7 +47,13 @@ export function setAuthCookie(token: string) {
 }
 
 export function clearAuthCookie() {
-  cookies().set(COOKIE, '', { httpOnly: true, maxAge: 0, path: '/' });
+  cookies().set(COOKIE, '', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 0,
+    path: '/',
+  });
 }
 
 export function getTokenFromCookies(): string | undefined {

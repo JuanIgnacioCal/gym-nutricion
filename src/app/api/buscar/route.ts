@@ -100,7 +100,7 @@ function normalizarOFF(p: any): AlimentoBusqueda | null {
   if (!n || !p.product_name) return null;
   return {
     fuente: 'openfoodfacts',
-    id: `off-${p.code ?? p.id ?? Math.random().toString(36).slice(2)}`,
+    id: `off-${p.code ?? p.id ?? p.product_name.toLowerCase().replace(/\s+/g, '-').slice(0, 40)}`,
     nombre: p.product_name,
     calorias: Math.round(n['energy-kcal_100g'] ?? 0),
     proteinas: +(+(n.proteins_100g ?? 0)).toFixed(1),

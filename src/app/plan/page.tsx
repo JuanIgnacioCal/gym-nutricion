@@ -11,6 +11,7 @@ import {
   colorChip,
   sumarMacros,
   macrosVacios,
+  labelSlot,
 } from '@/lib/util';
 import BottomNav from '@/components/BottomNav';
 import HamburgerMenu from '@/components/HamburgerMenu';
@@ -99,8 +100,9 @@ export default function PlanPage() {
           `&grasas=${perfil.objetivo.grasas}`
       );
       if (res.ok) {
-        const nueva: Receta = await res.json();
-        setPlan((p) => (p ? { ...p, [slot]: nueva } : p));
+        // Cambiar un slot reescala las porciones de todo el plan: re-traemos el plan completo ya ajustado.
+        const planRes = await fetch(`/api/plan?usuario_id=${perfil.id}&fecha=${fecha}`);
+        setPlan(await planRes.json());
       } else {
         mostrar('No hay otra receta disponible');
       }
@@ -130,6 +132,32 @@ export default function PlanPage() {
       if (data?.id) setFavMap((m) => ({ ...m, [r.id]: data.id }));
       mostrar('♥ Agregado a favoritos');
     }
+  };
+
+  const registrarComido = async (slot: TipoComida, r: Receta) => {
+    if (!perfil) return;
+    await fetch('/api/registro', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        usuario_id: perfil.id,
+        fecha,
+        tipo_comida: slot,
+        receta_id: r.id,
+        nombre_comida: r.nombre,
+        calorias: r.calorias,
+        proteinas: r.proteinas,
+        carbohidratos: r.carbohidratos,
+        grasas: r.grasas,
+        fibra: r.fibra,
+        gramos: 0,
+      }),
+    });
+    // Refrescar los totales consumidos del día.
+    const regRes = await fetch(`/api/registro?usuario_id=${perfil.id}&fecha=${fecha}`);
+    const registros = await regRes.json();
+    setConsumido(sumarMacros(Array.isArray(registros) ? registros : []));
+    mostrar(`✅ ${r.nombre} registrado en ${labelSlot(slot)}`);
   };
 
   if (!perfil) return <Cargando />;
@@ -218,6 +246,7 @@ export default function PlanPage() {
                 cargandoCambio={cambiando === s.value}
                 onFavorito={toggleFavorito}
                 onCambiar={() => cambiarSlot(s.value)}
+                onRegistrar={(r) => registrarComido(s.value, r)}
               />
             ))}
 
@@ -247,6 +276,9 @@ export default function PlanPage() {
             </section>
           </>
         )}
+        <p className="pt-1 pb-2 text-[10px] text-center" style={{ color: 'var(--color-texto-sec)' }}>
+          Orientación nutricional general · no reemplaza el consejo de un profesional de la salud.
+        </p>
       </div>
 
       <HamburgerMenu
