@@ -2,7 +2,7 @@
 import { useEffect } from 'react';
 import { X, Heart, Clock, ExternalLink } from 'lucide-react';
 import type { Receta } from '@/types';
-import { esLocal } from '@/lib/util';
+import { esLocal, escalarIngrediente } from '@/lib/util';
 
 interface RecipeDetailModalProps {
   receta: Receta | null;
@@ -38,6 +38,11 @@ export default function RecipeDetailModal({
     { l: 'Grasas', v: `${Math.round(receta.grasas)}`, u: 'g' },
     { l: 'Fibra', v: `${Math.round(receta.fibra)}`, u: 'g' },
   ];
+
+  // Factor de porción del plan: las cantidades y los macros ya vienen ajustados.
+  const factorEscala =
+    typeof receta.escala === 'number' && Number.isFinite(receta.escala) ? receta.escala : 1;
+  const porcionAjustada = Math.abs(factorEscala - 1) > 0.01;
 
   return (
     <div
@@ -100,12 +105,11 @@ export default function RecipeDetailModal({
             ))}
           </div>
 
-          {typeof receta.escala === 'number' && Math.abs(receta.escala - 1) > 0.01 && (
+          {porcionAjustada && (
             <p className="text-xs -mt-1" style={{ color: 'var(--color-texto-sec)' }}>
               Porción ajustada a tu objetivo:{' '}
-              <strong style={{ color: 'var(--color-acento)' }}>×{receta.escala}</strong>. Los macros
-              de arriba ya están ajustados; multiplicá las cantidades de los ingredientes por{' '}
-              {receta.escala}.
+              <strong style={{ color: 'var(--color-acento)' }}>×{factorEscala}</strong>. Las
+              cantidades de los ingredientes y los macros ya están ajustados a tu porción.
             </p>
           )}
 
@@ -117,7 +121,7 @@ export default function RecipeDetailModal({
                 {receta.ingredientes.map((ing, i) => (
                   <li key={i} className="flex gap-2 text-sm">
                     <span style={{ color: 'var(--color-primario)' }}>•</span>
-                    <span>{ing}</span>
+                    <span>{escalarIngrediente(ing, factorEscala)}</span>
                   </li>
                 ))}
               </ul>
