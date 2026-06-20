@@ -6,55 +6,9 @@ import type { NivelActividad, ObjetivoTipo, Sexo } from '@/types';
 import { clearUserLocal } from '@/lib/usuario';
 import { useGymConfig } from '@/lib/useGymConfig';
 import type { Objetivo } from '@/components/ObjetivosFields';
+import { calcularTDEE, OPC_SEXO, OPC_ACTIVIDAD, OPC_OBJETIVO } from '@/lib/calorias';
 
-const FACTORES_ACTIVIDAD: Record<NivelActividad, number> = {
-  sedentario: 1.2,
-  moderado: 1.375,
-  activo: 1.55,
-  muy_activo: 1.725,
-};
-
-const FACTORES_OBJETIVO: Record<ObjetivoTipo, number> = {
-  bajar: 0.80,
-  mantener: 1.00,
-  subir: 1.10,
-};
-
-function calcularTDEE(
-  peso: number, altura: number, edad: number,
-  sexo: Sexo, actividad: NivelActividad, objetivoTipo: ObjetivoTipo,
-): Objetivo {
-  const tmb =
-    sexo === 'masculino'
-      ? 10 * peso + 6.25 * altura - 5 * edad + 5
-      : 10 * peso + 6.25 * altura - 5 * edad - 161;
-  const tdee = Math.round(tmb * FACTORES_ACTIVIDAD[actividad] * FACTORES_OBJETIVO[objetivoTipo]);
-  return {
-    calorias: tdee,
-    proteinas: Math.round((tdee * 0.3) / 4),
-    carbohidratos: Math.round((tdee * 0.4) / 4),
-    grasas: Math.round((tdee * 0.3) / 9),
-    comidas: 3,
-  };
-}
-
-const OPC_SEXO: { val: Sexo; label: string }[] = [
-  { val: 'masculino', label: 'Masculino' },
-  { val: 'femenino', label: 'Femenino' },
-];
-
-const OPC_ACTIVIDAD: { val: NivelActividad; label: string; sub: string }[] = [
-  { val: 'sedentario', label: 'Sedentario', sub: 'Poco o nada de ejercicio' },
-  { val: 'moderado', label: 'Moderado', sub: '2-3 dias/semana' },
-  { val: 'activo', label: 'Activo', sub: '4-5 dias/semana' },
-  { val: 'muy_activo', label: 'Muy activo', sub: '6-7 dias/semana o trabajo fisico' },
-];
-
-const OPC_OBJETIVO: { val: ObjetivoTipo; label: string }[] = [
-  { val: 'bajar', label: 'Bajar peso' },
-  { val: 'mantener', label: 'Mantener' },
-  { val: 'subir', label: 'Ganar masa' },
-];
+// calcularTDEE, los factores y las opciones viven en @/lib/calorias (reutilizables en el menú).
 
 export default function OnboardingPage() {
   const router = useRouter();

@@ -1,13 +1,20 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { X, ClipboardList, Search, Pencil, Sun, Moon, ChefHat, Apple } from 'lucide-react';
+import { X, ClipboardList, Search, Pencil, Sun, Moon, ChefHat, Apple, Calculator, ChevronDown } from 'lucide-react';
 import type { UserProfile } from '@/types';
 import { getUserAsync, saveUser, aplicarTema } from '@/lib/usuario';
 import { useGymConfig } from '@/lib/useGymConfig';
 import ObjetivosFields, { Objetivo } from './ObjetivosFields';
 import AgregarRecetaModal from './AgregarRecetaModal';
 import { useToast } from './Toast';
+import { calcularTDEE, OPC_SEXO, OPC_ACTIVIDAD, OPC_OBJETIVO } from '@/lib/calorias';
+
+type DatosFisicos = NonNullable<UserProfile['datos_fisicos']>;
+const DF_DEFAULT: DatosFisicos = {
+  peso: 70, altura: 170, edad: 30,
+  sexo: 'masculino', nivel_actividad: 'moderado', objetivo_tipo: 'mantener',
+};
 
 interface HamburgerMenuProps {
   abierto: boolean;
@@ -24,6 +31,9 @@ export default function HamburgerMenu({ abierto, onClose, onPerfilActualizado }:
   const [perfil, setPerfil] = useState<UserProfile | null>(null);
   const [editandoObjetivos, setEditandoObjetivos] = useState(false);
   const [objetivo, setObjetivo] = useState<Objetivo | null>(null);
+  const [df, setDf] = useState<DatosFisicos>(DF_DEFAULT);
+  const [mostrarRecalc, setMostrarRecalc] = useState(false);
+  const [dfTocado, setDfTocado] = useState(false);
   const [nombre, setNombre] = useState('');
   const [email, setEmail] = useState('');
   const [agregarReceta, setAgregarReceta] = useState(false);
@@ -37,10 +47,13 @@ export default function HamburgerMenu({ abierto, onClose, onPerfilActualizado }:
         setPerfil(u);
         if (u) {
           setObjetivo(u.objetivo);
+          setDf(u.datos_fisicos ?? DF_DEFAULT);
           setNombre(u.nombre);
           setEmail(u.email);
         }
         setEditandoObjetivos(false);
+        setMostrarRecalc(false);
+        setDfTocado(false);
       })();
       return () => {
         cancelado = true;
@@ -48,32 +61,62 @@ export default function HamburgerMenu({ abierto, onClose, onPerfilActualizado }:
     }
   }, [abierto]);
 
-  const persistir = (cambios: Partial<UserProfile>) => {
-    if (!perfil) return;
+  const persistir = async (cambios: Partial<UserProfile>): Promise<boolean> => {
+    if (!perfil) return false;
     const nuevo: UserProfile = { ...perfil, ...cambios };
-    saveUser(nuevo);
     setPerfil(nuevo);
+    saveUser(nuevo); // cache local como fallback offline
     onPerfilActualizado?.(nuevo);
-    return nuevo;
+    try {
+      const res = await fetch('/api/auth/me', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nombre: nuevo.nombre,
+          tema: nuevo.tema,
+          objetivo: nuevo.objetivo,
+          datos_fisicos: nuevo.datos_fisicos,
+        }),
+      });
+      return res.ok;
+    } catch {
+      return false;
+    }
   };
 
-  const guardarObjetivos = () => {
+  const guardarObjetivos = async () => {
     if (!objetivo) return;
-    persistir({ objetivo });
+    const cambios: Partial<UserProfile> = dfTocado ? { objetivo, datos_fisicos: df } : { objetivo };
+    const ok = await persistir(cambios);
     setEditandoObjetivos(false);
-    mostrar('✅ Objetivos actualizados');
+    setMostrarRecalc(false);
+    setDfTocado(false);
+    mostrar(ok ? '✅ Objetivos actualizados' : '⚠️ Guardado local (revisá tu conexión)');
+  };
+
+  const updateDf = (cambios: Partial<DatosFisicos>) => {
+    setDf((prev) => ({ ...prev, ...cambios }));
+    setDfTocado(true);
+  };
+
+  const recalcular = () => {
+    const comidas = objetivo?.comidas ?? 3;
+    setObjetivo(
+      calcularTDEE(df.peso, df.altura, df.edad, df.sexo, df.nivel_actividad, df.objetivo_tipo, comidas),
+    );
+    setDfTocado(true);
   };
 
   const toggleTema = () => {
     if (!perfil) return;
     const nuevoTema = perfil.tema === 'oscuro' ? 'claro' : 'oscuro';
     aplicarTema(nuevoTema);
-    persistir({ tema: nuevoTema });
+    void persistir({ tema: nuevoTema });
   };
 
-  const guardarPerfil = () => {
-    persistir({ nombre, email });
-    mostrar('✅ Perfil actualizado');
+  const guardarPerfil = async () => {
+    const ok = await persistir({ nombre });
+    mostrar(ok ? '✅ Perfil actualizado' : '⚠️ Guardado local (revisá tu conexión)');
   };
 
   const irA = (href: string) => {
@@ -181,6 +224,48 @@ export default function HamburgerMenu({ abierto, onClose, onPerfilActualizado }:
               {editandoObjetivos && objetivo ? (
                 <div className="flex flex-col gap-3">
                   <ObjetivosFields valor={objetivo} onChange={setObjetivo} />
+
+                  {/* Recalcular desde datos físicos (plegable, para no saturar la pantalla) */}
+                  <div className="rounded-btn" style={{ border: '1px solid var(--color-borde)' }}>
+                    <button
+                      type="button"
+                      onClick={() => setMostrarRecalc((v) => !v)}
+                      className="flex w-full items-center justify-between px-3 py-2.5 text-sm font-medium"
+                    >
+                      <span className="flex items-center gap-2">
+                        <Calculator size={16} style={{ color: 'var(--color-primario)' }} />
+                        Recalcular desde mis datos
+                      </span>
+                      <ChevronDown
+                        size={16}
+                        style={{ transform: mostrarRecalc ? 'rotate(180deg)' : 'none', transition: 'transform .2s' }}
+                      />
+                    </button>
+                    {mostrarRecalc && (
+                      <div className="flex flex-col gap-3 px-3 pb-3">
+                        <div className="grid grid-cols-3 gap-2">
+                          <NumChico label="Peso (kg)" value={df.peso} onChange={(n) => updateDf({ peso: n })} />
+                          <NumChico label="Altura (cm)" value={df.altura} onChange={(n) => updateDf({ altura: n })} />
+                          <NumChico label="Edad" value={df.edad} onChange={(n) => updateDf({ edad: n })} />
+                        </div>
+                        <Selector label="Sexo" opciones={OPC_SEXO} valor={df.sexo} onPick={(v) => updateDf({ sexo: v })} />
+                        <Selector label="Actividad" opciones={OPC_ACTIVIDAD} valor={df.nivel_actividad} onPick={(v) => updateDf({ nivel_actividad: v })} />
+                        <Selector label="Objetivo" opciones={OPC_OBJETIVO} valor={df.objetivo_tipo} onPick={(v) => updateDf({ objetivo_tipo: v })} />
+                        <button
+                          type="button"
+                          onClick={recalcular}
+                          className="w-full rounded-btn py-2.5 text-sm font-semibold"
+                          style={{ background: 'var(--color-superficie-alt)', border: '1px solid var(--color-primario)', color: 'var(--color-primario)' }}
+                        >
+                          Recalcular calorías
+                        </button>
+                        <p className="text-xs" style={{ color: 'var(--color-texto-sec)' }}>
+                          Usa la fórmula Mifflin-St Jeor. Después podés ajustar los valores a mano arriba. Se guardan al tocar “Guardar”.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
                   <div className="flex gap-2">
                     <button
                       onClick={guardarObjetivos}
@@ -248,11 +333,12 @@ export default function HamburgerMenu({ abierto, onClose, onPerfilActualizado }:
                 />
                 <input
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  readOnly
                   placeholder="Email"
                   type="email"
+                  title="El email es tu usuario de acceso y no se puede cambiar por ahora"
                   className="w-full rounded-btn px-3 py-2.5 text-sm outline-none"
-                  style={{ background: 'var(--color-superficie-alt)', border: '1px solid var(--color-borde)', color: 'var(--color-texto)' }}
+                  style={{ background: 'var(--color-superficie-alt)', border: '1px solid var(--color-borde)', color: 'var(--color-texto-sec)' }}
                 />
                 <button
                   onClick={guardarPerfil}
@@ -292,6 +378,57 @@ function Dato({ label, valor }: { label: string; valor: string }) {
     <div>
       <div className="text-xs" style={{ color: 'var(--color-texto-sec)' }}>{label}</div>
       <div className="font-semibold" style={{ color: 'var(--color-acento)' }}>{valor}</div>
+    </div>
+  );
+}
+
+function NumChico({ label, value, onChange }: {
+  label: string; value: number; onChange: (n: number) => void;
+}) {
+  return (
+    <label className="block">
+      <span className="text-xs" style={{ color: 'var(--color-texto-sec)' }}>{label}</span>
+      <input
+        type="number"
+        inputMode="numeric"
+        value={value === 0 ? '' : value}
+        onChange={(e) => onChange(e.target.value === '' ? 0 : Number(e.target.value))}
+        className="mt-1 w-full rounded-btn px-2 py-2 text-sm outline-none"
+        style={{ background: 'var(--color-superficie-alt)', border: '1px solid var(--color-borde)', color: 'var(--color-texto)', textAlign: 'right' }}
+      />
+    </label>
+  );
+}
+
+function Selector<T extends string>({ label, opciones, valor, onPick }: {
+  label: string;
+  opciones: { val: T; label: string }[];
+  valor: T;
+  onPick: (v: T) => void;
+}) {
+  return (
+    <div>
+      <span className="text-xs" style={{ color: 'var(--color-texto-sec)' }}>{label}</span>
+      <div className="mt-1 flex flex-wrap gap-1.5">
+        {opciones.map((o) => {
+          const activo = valor === o.val;
+          return (
+            <button
+              key={o.val}
+              type="button"
+              onClick={() => onPick(o.val)}
+              className="rounded-btn px-3 py-1.5 text-xs font-semibold"
+              style={{
+                background: activo ? 'var(--color-primario)' : 'var(--color-superficie-alt)',
+                color: activo ? 'var(--color-sobre-primario)' : 'var(--color-texto)',
+                border: `1px solid ${activo ? 'var(--color-primario)' : 'var(--color-borde)'}`,
+              }}
+            >
+              {o.label}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
