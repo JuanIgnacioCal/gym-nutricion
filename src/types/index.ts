@@ -18,6 +18,8 @@ export interface GymConfig {
       sobrePrimario?: string;
     };
   };
+  /** Email del dueño del gym. Solo este usuario puede ver el panel (/panel). Se setea por gym (white-label). */
+  ownerEmail?: string;
 }
 
 export type TipoComida = 'desayuno' | 'almuerzo' | 'merienda' | 'cena';
@@ -48,6 +50,8 @@ export interface UserProfile {
   };
   tema: 'oscuro' | 'claro';
   onboardingCompleto: boolean;
+  /** True si el usuario logueado es el dueño del gym. Lo calcula el server en /api/auth/me. */
+  esDueno?: boolean;
 }
 
 export interface Receta {
@@ -139,4 +143,37 @@ export interface MacroTotales {
   proteinas: number;
   carbohidratos: number;
   grasas: number;
+}
+
+/** Serie temporal del panel del dueño: etiquetas + dos métricas alineadas por índice. */
+export interface PanelSerie {
+  labels: string[];
+  planes: number[];
+  comidas: number[];
+}
+
+/** Una fila de la tabla de socios del panel del dueño. */
+export interface PanelSocio {
+  id: string;
+  nombre: string;
+  email: string;
+  /** Fecha de alta (YYYY-MM-DD). */
+  alta: string;
+  /** Último día con actividad (plan o registro), o null si nunca usó la app. */
+  ultimo: string | null;
+  kcal: number;
+  comidas: 3 | 4;
+  objetivo_tipo: ObjetivoTipo | null;
+}
+
+/** Respuesta de GET /api/panel: métricas agregadas del gym para el dueño. */
+export interface PanelData {
+  /** Fecha de referencia con la que se calcularon las métricas (YYYY-MM-DD). */
+  generadoEl: string;
+  kpis: { total: number; activos7: number; activos30: number; altasMes: number };
+  serie: { dia: PanelSerie; semana: PanelSerie };
+  socios: PanelSocio[];
+  objetivos: { bajar: number; mantener: number; subir: number; sin_definir: number };
+  kcalPromedio: number;
+  comidasSplit: { tres: number; cuatro: number };
 }

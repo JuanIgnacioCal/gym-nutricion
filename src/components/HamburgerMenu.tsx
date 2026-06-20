@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { X, ClipboardList, Search, Pencil, Sun, Moon, ChefHat, Apple, Calculator, ChevronDown } from 'lucide-react';
+import { X, ClipboardList, Search, Pencil, Sun, Moon, ChefHat, Apple, Calculator, ChevronDown, BarChart3 } from 'lucide-react';
 import type { UserProfile } from '@/types';
 import { getUserAsync, saveUser, aplicarTema } from '@/lib/usuario';
 import { useGymConfig } from '@/lib/useGymConfig';
@@ -166,6 +166,17 @@ export default function HamburgerMenu({ abierto, onClose, onPerfilActualizado }:
                 <X size={22} />
               </button>
             </div>
+
+            {/* Panel del dueño (solo visible para el dueño del gym, según email de la sesión) */}
+            {perfil.esDueno && (
+              <button
+                onClick={() => irA('/panel')}
+                className="flex w-full items-center gap-3 rounded-btn px-3 py-3 text-left text-sm font-semibold"
+                style={{ background: 'var(--color-primario)', color: 'var(--color-sobre-primario)' }}
+              >
+                <BarChart3 size={18} /> Panel del dueño
+              </button>
+            )}
 
             {/* Explorar */}
             <section>

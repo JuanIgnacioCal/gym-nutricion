@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import getDb from '@/lib/db';
 import { getSesion, getTokenFromCookies, verificarToken } from '@/lib/auth';
+import { esEmailDueno } from '@/lib/gymConfig';
 import type { UserProfile } from '@/types';
 
 export const dynamic = 'force-dynamic';
@@ -46,6 +47,7 @@ export async function GET() {
     datos_fisicos: row.datos_fisicos ? JSON.parse(row.datos_fisicos) : undefined,
     tema: (row.tema ?? 'oscuro') as 'oscuro' | 'claro',
     onboardingCompleto: true,
+    esDueno: esEmailDueno(row.email),
   };
 
   return NextResponse.json(perfil);
@@ -125,6 +127,7 @@ export async function PUT(req: NextRequest) {
     datos_fisicos: datos_fisicos ? JSON.parse(datos_fisicos) : undefined,
     tema: tema as 'oscuro' | 'claro',
     onboardingCompleto: true,
+    esDueno: esEmailDueno(row.email),
   };
   return NextResponse.json(perfil);
 }
