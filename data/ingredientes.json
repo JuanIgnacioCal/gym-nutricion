@@ -58,6 +58,18 @@
     "pepino": { "calorias": 15, "proteinas": 0.7, "carbohidratos": 3.6, "grasas": 0.1, "fibra": 0.5, "porcion": "100 g", "usda_fdcId": 168409, "usda_descripcion": "Cucumber, with peel, raw" },
     "arvejas": { "calorias": 81, "proteinas": 5.4, "carbohidratos": 14.4, "grasas": 0.4, "fibra": 5.7, "porcion": "100 g", "usda_fdcId": 170419, "usda_descripcion": "Peas, green, raw" },
     "cebolla de verdeo": { "calorias": 32, "proteinas": 1.8, "carbohidratos": 7.3, "grasas": 0.2, "fibra": 2.6, "porcion": "100 g", "usda_fdcId": 170005, "usda_descripcion": "Onions, spring or scallions (includes tops and bulb), raw" },
-    "quinoa cocida": { "calorias": 120, "proteinas": 4.4, "carbohidratos": 21.3, "grasas": 1.9, "fibra": 2.8, "porcion": "100 g", "usda_fdcId": 168917, "usda_descripcion": "Quinoa, cooked" }
+    "quinoa cocida": { "calorias": 120, "proteinas": 4.4, "carbohidratos": 21.3, "grasas": 1.9, "fibra": 2.8, "porcion": "100 g", "usda_fdcId": 168917, "usda_descripcion": "Quinoa, cooked" },
+    "rúcula": { "calorias": 25, "proteinas": 2.6, "carbohidratos": 3.6, "grasas": 0.7, "fibra": 1.6, "porcion": "100 g", "usda_fdcId": 169387, "usda_descripcion": "Arugula, raw" },
+    "espárragos": { "calorias": 20, "proteinas": 2.2, "carbohidratos": 3.9, "grasas": 0.1, "fibra": 2.1, "porcion": "100 g", "usda_fdcId": 168389, "usda_descripcion": "Asparagus, raw" },
+    "morrón verde": { "calorias": 20, "proteinas": 0.9, "carbohidratos": 4.6, "grasas": 0.2, "fibra": 1.7, "porcion": "100 g", "usda_fdcId": 170427, "usda_descripcion": "Peppers, sweet, green, raw" },
+    "cebolla morada": { "calorias": 44, "proteinas": 0.9, "carbohidratos": 9.9, "grasas": 0.1, "fibra": 2.2, "porcion": "100 g", "usda_fdcId": 790577, "usda_descripcion": "Onions, red, raw" },
+    "damasco": { "calorias": 48, "proteinas": 1.4, "carbohidratos": 11.1, "grasas": 0.4, "fibra": 2, "porcion": "100 g", "usda_fdcId": 171697, "usda_descripcion": "Apricots, raw" },
+    "quinoa cruda": { "calorias": 368, "proteinas": 14.1, "carbohidratos": 64.2, "grasas": 6.1, "fibra": 7, "porcion": "100 g", "usda_fdcId": 168874, "usda_descripcion": "Quinoa, uncooked" },
+    "leche entera": { "calorias": 61, "proteinas": 3.2, "carbohidratos": 4.8, "grasas": 3.3, "fibra": 0, "porcion": "100 g", "usda_fdcId": 172217, "usda_descripcion": "Milk, whole, 3.25% milkfat, without added vitamin A and vitamin D" },
+    "maní": { "calorias": 567, "proteinas": 25.8, "carbohidratos": 16.1, "grasas": 49.2, "fibra": 8.5, "porcion": "100 g", "usda_fdcId": 172430, "usda_descripcion": "Peanuts, all types, raw" },
+    "queso mozzarella": { "calorias": 300, "proteinas": 22.2, "carbohidratos": 2.2, "grasas": 22.4, "fibra": 0, "porcion": "100 g", "usda_fdcId": 170845, "usda_descripcion": "Cheese, mozzarella, whole milk" },
+    "durazno": { "calorias": 39, "proteinas": 0.9, "carbohidratos": 9.5, "grasas": 0.3, "fibra": 1.5, "porcion": "100 g", "usda_fdcId": 169928, "usda_descripcion": "Peaches, raw" },
+    "pera": { "calorias": 57, "proteinas": 0.4, "carbohidratos": 15.2, "grasas": 0.1, "fibra": 3.1, "porcion": "100 g", "usda_fdcId": 169118, "usda_descripcion": "Pears, raw" },
+    "tomate cherry": { "calorias": 27, "proteinas": 0.8, "carbohidratos": 5.5, "grasas": 0.6, "fibra": 2.1, "porcion": "100 g", "usda_fdcId": 321360, "usda_descripcion": "Tomatoes, grape, raw" }
   }
 }
