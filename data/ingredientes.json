@@ -46,6 +46,18 @@
     "frutillas": { "calorias": 32, "proteinas": 0.7, "carbohidratos": 7.7, "grasas": 0.3, "fibra": 2, "porcion": "100 g", "usda_fdcId": 167762, "usda_descripcion": "Strawberries, raw" },
     "palta": { "calorias": 160, "proteinas": 2, "carbohidratos": 8.5, "grasas": 14.7, "fibra": 6.7, "porcion": "100 g", "usda_fdcId": 171705, "usda_descripcion": "Avocados, raw, all commercial varieties" },
     "almendras": { "calorias": 626, "proteinas": 21.5, "carbohidratos": 20, "grasas": 51.1, "fibra": 10.8, "porcion": "100 g", "usda_fdcId": 2346393, "usda_descripcion": "Nuts, almonds, whole, raw" },
-    "nueces": { "calorias": 729, "proteinas": 14.6, "carbohidratos": 10.9, "grasas": 69.7, "fibra": 5.2, "porcion": "100 g", "usda_fdcId": 2346394, "usda_descripcion": "Nuts, walnuts, English, halves, raw" }
+    "nueces": { "calorias": 729, "proteinas": 14.6, "carbohidratos": 10.9, "grasas": 69.7, "fibra": 5.2, "porcion": "100 g", "usda_fdcId": 2346394, "usda_descripcion": "Nuts, walnuts, English, halves, raw" },
+    "cebolla": { "calorias": 40, "proteinas": 1.1, "carbohidratos": 9.3, "grasas": 0.1, "fibra": 1.7, "porcion": "100 g", "usda_fdcId": 170000, "usda_descripcion": "Onions, raw" },
+    "tomate": { "calorias": 18, "proteinas": 0.9, "carbohidratos": 3.9, "grasas": 0.2, "fibra": 1.2, "porcion": "100 g", "usda_fdcId": 170457, "usda_descripcion": "Tomatoes, red, ripe, raw, year round average" },
+    "ajo": { "calorias": 149, "proteinas": 6.4, "carbohidratos": 33.1, "grasas": 0.5, "fibra": 2.1, "porcion": "100 g", "usda_fdcId": 169230, "usda_descripcion": "Garlic, raw" },
+    "morrón": { "calorias": 26, "proteinas": 1, "carbohidratos": 6, "grasas": 0.3, "fibra": 2.1, "porcion": "100 g", "usda_fdcId": 170108, "usda_descripcion": "Peppers, sweet, red, raw" },
+    "zapallito": { "calorias": 17, "proteinas": 1.2, "carbohidratos": 3.1, "grasas": 0.3, "fibra": 1, "porcion": "100 g", "usda_fdcId": 169291, "usda_descripcion": "Squash, summer, zucchini, includes skin, raw" },
+    "lechuga": { "calorias": 17, "proteinas": 1.2, "carbohidratos": 3.3, "grasas": 0.3, "fibra": 2.1, "porcion": "100 g", "usda_fdcId": 169247, "usda_descripcion": "Lettuce, cos or romaine, raw" },
+    "espinaca": { "calorias": 23, "proteinas": 2.9, "carbohidratos": 3.6, "grasas": 0.4, "fibra": 2.2, "porcion": "100 g", "usda_fdcId": 168462, "usda_descripcion": "Spinach, raw" },
+    "zapallo": { "calorias": 45, "proteinas": 1, "carbohidratos": 11.7, "grasas": 0.1, "fibra": 2, "porcion": "100 g", "usda_fdcId": 169295, "usda_descripcion": "Squash, winter, butternut, raw", "nota": "Equivale al zapallo anco/calabaza; USDA lo lista como butternut." },
+    "pepino": { "calorias": 15, "proteinas": 0.7, "carbohidratos": 3.6, "grasas": 0.1, "fibra": 0.5, "porcion": "100 g", "usda_fdcId": 168409, "usda_descripcion": "Cucumber, with peel, raw" },
+    "arvejas": { "calorias": 81, "proteinas": 5.4, "carbohidratos": 14.4, "grasas": 0.4, "fibra": 5.7, "porcion": "100 g", "usda_fdcId": 170419, "usda_descripcion": "Peas, green, raw" },
+    "cebolla de verdeo": { "calorias": 32, "proteinas": 1.8, "carbohidratos": 7.3, "grasas": 0.2, "fibra": 2.6, "porcion": "100 g", "usda_fdcId": 170005, "usda_descripcion": "Onions, spring or scallions (includes tops and bulb), raw" },
+    "quinoa cocida": { "calorias": 120, "proteinas": 4.4, "carbohidratos": 21.3, "grasas": 1.9, "fibra": 2.8, "porcion": "100 g", "usda_fdcId": 168917, "usda_descripcion": "Quinoa, cooked" }
   }
 }
