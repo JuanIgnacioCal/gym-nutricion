@@ -6,7 +6,11 @@ import { aplicarReemplazos } from './reemplazos';
 
 export function seedRecetas(db: Database.Database) {
   const count = db.prepare('SELECT COUNT(*) as count FROM recetas').get() as { count: number };
-  if (count.count > 0) return;
+  // Seed idempotente: NO cortamos si ya hay datos. Insertamos con INSERT OR IGNORE
+  // para sumar recetas nuevas del JSON (ids que aún no están) sin tocar las existentes.
+  // Esto permite que recetas agregadas a data/recetas.json aparezcan en el próximo deploy,
+  // aunque la DB ya esté poblada (ej. el Volume persistente de Railway).
+  const fresco = count.count === 0;
 
   const recetasPath = path.join(process.cwd(), 'data', 'recetas.json');
   const recetas = JSON.parse(fs.readFileSync(recetasPath, 'utf-8'));
@@ -36,14 +40,17 @@ export function seedRecetas(db: Database.Database) {
 
   insertMany(recetas);
   const total = (db.prepare('SELECT COUNT(*) as count FROM recetas').get() as { count: number }).count;
-  console.log(`✅ ${total} recetas importadas a SQLite (de ${recetas.length} entradas del JSON)`);
+  console.log(`✅ ${total} recetas en SQLite (de ${recetas.length} entradas del JSON)`);
 
-  // Post-procesamiento (solo en seed fresco):
-  // PROBLEMA 3 — traducir ingredientes de recetas en inglés (allrecipes_dataset)
-  const traducidas = traducirIngredientesDataset(db);
-  console.log(`🌐 Ingredientes traducidos en ${traducidas} recetas (allrecipes_dataset)`);
+  // Post-procesamiento SOLO en seed fresco. No debe re-aplicarse sobre una DB ya poblada;
+  // además las recetas nuevas (origen 'local') ya vienen en español, no necesitan traducción.
+  if (fresco) {
+    // PROBLEMA 3 — traducir ingredientes de recetas en inglés (allrecipes_dataset)
+    const traducidas = traducirIngredientesDataset(db);
+    console.log(`🌐 Ingredientes traducidos en ${traducidas} recetas (allrecipes_dataset)`);
 
-  // PROBLEMA 7 — reemplazar recetas con ingredientes difíciles de conseguir
-  const reemplazadas = aplicarReemplazos(db);
-  console.log(`🔁 Recetas reemplazadas: ${reemplazadas.length ? reemplazadas.join(', ') : 'ninguna'}`);
+    // PROBLEMA 7 — reemplazar recetas con ingredientes difíciles de conseguir
+    const reemplazadas = aplicarReemplazos(db);
+    console.log(`🔁 Recetas reemplazadas: ${reemplazadas.length ? reemplazadas.join(', ') : 'ninguna'}`);
+  }
 }
