@@ -8,9 +8,11 @@ import { clearUserLocal } from '@/lib/usuario';
 
 const inputStyle: React.CSSProperties = {
   width: '100%',
-  borderRadius: 'var(--radio-btn)',
-  padding: '0.75rem',
-  fontSize: '1rem',
+  height: 54,
+  borderRadius: 16,
+  padding: '0 18px',
+  fontSize: '16px',
+  fontWeight: 600,
   outline: 'none',
   background: 'var(--color-superficie-alt)',
   border: '1px solid var(--color-borde)',
@@ -67,7 +69,7 @@ export default function LoginPage() {
             style={{ background: 'var(--color-superficie)' }}
             onError={(e) => ((e.target as HTMLImageElement).style.visibility = 'hidden')}
           />
-          <h1 className="text-2xl font-extrabold">Iniciar sesión</h1>
+          <h1 className="text-[28px] font-extrabold" style={{ letterSpacing: '-0.6px' }}>Iniciar sesión</h1>
           <p className="text-sm" style={{ color: 'var(--color-texto-sec)' }}>{gym.nombre}</p>
         </div>
 
@@ -111,8 +113,8 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={cargando}
-            className="w-full inline-flex items-center justify-center gap-1 rounded-btn py-3.5 text-base font-semibold transition-opacity disabled:opacity-40"
-            style={{ background: 'var(--color-primario)', color: 'var(--color-sobre-primario)' }}
+            className="btn-dorado mt-1 inline-flex w-full items-center justify-center gap-1.5 text-base font-extrabold transition-opacity disabled:opacity-50"
+            style={{ height: 56, borderRadius: 18 }}
           >
             {cargando ? 'Ingresando…' : 'Ingresar'} <ChevronRight size={18} />
           </button>

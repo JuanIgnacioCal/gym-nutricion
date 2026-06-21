@@ -1,7 +1,7 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { X, Clock, Plus } from 'lucide-react';
+import { X, Clock, Plus, Heart } from 'lucide-react';
 import type { Receta, TipoComida, UserProfile, AlimentoBusqueda } from '@/types';
 import { getUserAsync, aplicarTema } from '@/lib/usuario';
 import { fechaHoy, slotsDe, labelSlot, escalarPorGramos } from '@/lib/util';
@@ -104,15 +104,21 @@ export default function FavoritosPage() {
   const vacio = !cargando && favRecetas.length === 0 && favAlimentos.length === 0;
 
   return (
-    <main className="min-h-screen px-4 pt-6">
-      <h1 className="text-xl font-bold mb-4">Favoritos</h1>
+    <main className="min-h-screen px-5" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 22px)' }}>
+      <h1 className="mb-5 text-[27px] font-extrabold" style={{ letterSpacing: '-0.7px' }}>Favoritos</h1>
 
       {cargando && <Spinner inline />}
 
       {vacio && (
-        <div className="py-16 text-center">
-          <p style={{ color: 'var(--color-texto-sec)' }}>
-            Aún no tenés favoritos. Marcá recetas con ♡ desde el plan del día.
+        <div className="flex flex-col items-center gap-4 py-16 text-center">
+          <div
+            className="flex items-center justify-center"
+            style={{ width: 72, height: 72, borderRadius: '50%', background: 'radial-gradient(circle, color-mix(in srgb, var(--color-primario) 18%, transparent), transparent 70%)' }}
+          >
+            <Heart size={30} style={{ color: 'var(--color-primario)' }} />
+          </div>
+          <p className="font-medium" style={{ color: 'var(--color-texto-sec)', maxWidth: 240, lineHeight: 1.5 }}>
+            Aún no tenés favoritos. Marcá recetas con ♥ desde el plan del día.
           </p>
         </div>
       )}
@@ -128,17 +134,17 @@ export default function FavoritosPage() {
               f.receta ? (
                 <div
                   key={f.id}
-                  className="rounded-card p-4 flex flex-col gap-3"
+                  className="flex flex-col gap-3 p-4"
                   style={{
+                    borderRadius: 20,
                     background: 'var(--color-superficie)',
                     border: '1px solid var(--color-borde)',
-                    borderLeft: '3px solid var(--color-primario)',
                   }}
                 >
                   <div className="flex items-start justify-between gap-2">
                     <button
                       onClick={() => setDetalle(f.receta)}
-                      className="text-left font-bold leading-tight"
+                      className="text-left text-[16px] font-extrabold leading-tight"
                     >
                       {f.receta.nombre}
                     </button>
@@ -238,8 +244,8 @@ function AgregarAlPlan({
       </select>
       <button
         onClick={() => onAgregar(slot)}
-        className="flex-1 inline-flex items-center justify-center gap-1 rounded-btn py-2 text-sm font-semibold"
-        style={{ background: 'var(--color-primario)', color: 'var(--color-sobre-primario)' }}
+        className="btn-dorado inline-flex flex-1 items-center justify-center gap-1 py-2.5 text-sm font-extrabold"
+        style={{ borderRadius: 13 }}
       >
         <Plus size={15} /> Agregar al plan
       </button>
@@ -278,8 +284,8 @@ function RegistrarAlimento({
       </select>
       <button
         onClick={() => onRegistrar(gramos, tipo)}
-        className="flex-1 inline-flex items-center justify-center gap-1 rounded-btn py-2 text-sm font-semibold"
-        style={{ background: 'var(--color-primario)', color: 'var(--color-sobre-primario)' }}
+        className="btn-dorado inline-flex flex-1 items-center justify-center gap-1 py-2.5 text-sm font-extrabold"
+        style={{ borderRadius: 13 }}
       >
         Registrar
       </button>

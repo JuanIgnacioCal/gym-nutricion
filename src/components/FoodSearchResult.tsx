@@ -31,7 +31,7 @@ export default function FoodSearchResult({
       style={{ background: 'var(--color-superficie)', border: '1px solid var(--color-borde)' }}
     >
       <div className="flex items-start justify-between gap-2">
-        <h3 className="font-semibold leading-tight">{alimento.nombre}</h3>
+        <h3 className="font-extrabold leading-tight">{alimento.nombre}</h3>
         <span
           className="shrink-0 text-[10px] px-2 py-0.5 rounded-full"
           style={{ background: 'var(--color-superficie-alt)', color: 'var(--color-texto-sec)' }}
@@ -102,8 +102,8 @@ export default function FoodSearchResult({
         </select>
         <button
           onClick={() => onRegistrar(alimento, gramos || 0, tipo)}
-          className="flex-1 inline-flex items-center justify-center gap-1 rounded-btn py-2 text-sm font-semibold"
-          style={{ background: 'var(--color-primario)', color: 'var(--color-sobre-primario)' }}
+          className="btn-dorado inline-flex flex-1 items-center justify-center gap-1 py-2.5 text-sm font-extrabold"
+          style={{ borderRadius: 13 }}
         >
           <Plus size={16} /> Registrar
         </button>

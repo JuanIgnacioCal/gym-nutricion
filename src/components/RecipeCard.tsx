@@ -34,10 +34,10 @@ export default function RecipeCard({
         className="rounded-card overflow-hidden animar-entrada cursor-pointer text-left"
         style={{ background: 'var(--color-superficie)', border: '1px solid var(--color-borde)' }}
       >
-        <div style={{ height: 4, background: 'var(--color-primario)' }} />
+        <div style={{ height: 4, background: 'var(--gradiente-dorado)' }} />
         <div className="p-4 flex flex-col gap-3">
           <div className="flex items-start justify-between gap-2">
-            <h3 className="font-bold text-base leading-tight">{receta.nombre}</h3>
+            <h3 className="text-base font-extrabold leading-tight">{receta.nombre}</h3>
             {onToggleFavorito && (
               <button
                 onClick={(e) => {
@@ -86,8 +86,8 @@ export default function RecipeCard({
                 e.stopPropagation();
                 onAgregar(receta);
               }}
-              className="inline-flex items-center justify-center gap-1 rounded-btn py-2 text-sm font-semibold"
-              style={{ background: 'var(--color-primario)', color: 'var(--color-sobre-primario)' }}
+              className="btn-dorado inline-flex items-center justify-center gap-1 py-2.5 text-sm font-extrabold"
+              style={{ borderRadius: 13 }}
             >
               <Plus size={16} /> Agregar
             </button>

@@ -162,10 +162,10 @@ export default function RegistrarPage() {
   const tipos = slots.map((s) => ({ value: s.value, label: s.label }));
 
   return (
-    <main className="min-h-screen px-4 pt-5">
+    <main className="min-h-screen px-5" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 22px)' }}>
       <header className="mb-4">
-        <h1 className="text-xl font-bold">¿Qué comiste?</h1>
-        <p className="text-sm capitalize" style={{ color: 'var(--color-texto-sec)' }}>{fechaLarga()}</p>
+        <h1 className="text-[27px] font-extrabold" style={{ letterSpacing: '-0.7px' }}>¿Qué comiste?</h1>
+        <p className="mt-1 text-sm font-medium capitalize" style={{ color: 'var(--color-texto-sec)' }}>{fechaLarga()}</p>
       </header>
 
       {/* Tabs de comida */}
@@ -176,11 +176,12 @@ export default function RegistrarPage() {
             <button
               key={s.value}
               onClick={() => setTipoSel(s.value)}
-              className="shrink-0 rounded-full px-4 py-2 text-sm font-medium"
+              className="shrink-0 px-4 py-2 text-sm font-bold"
               style={{
-                background: activo ? 'var(--color-primario)' : 'var(--color-superficie)',
+                borderRadius: 13,
+                background: activo ? 'var(--gradiente-dorado)' : 'var(--color-superficie)',
                 color: activo ? 'var(--color-sobre-primario)' : 'var(--color-texto-sec)',
-                border: `1px solid ${activo ? 'var(--color-primario)' : 'var(--color-borde)'}`,
+                border: `1px solid ${activo ? 'transparent' : 'var(--color-borde)'}`,
               }}
             >
               {s.label}
@@ -224,8 +225,8 @@ export default function RegistrarPage() {
               </div>
               <button
                 onClick={() => agregarReceta(r)}
-                className="shrink-0 inline-flex items-center gap-1 rounded-btn px-3 py-2 text-sm font-semibold"
-                style={{ background: 'var(--color-primario)', color: 'var(--color-sobre-primario)' }}
+                className="btn-dorado inline-flex shrink-0 items-center gap-1 px-3 py-2 text-sm font-extrabold"
+                style={{ borderRadius: 12 }}
               >
                 <Plus size={15} /> Agregar
               </button>
@@ -248,8 +249,8 @@ export default function RegistrarPage() {
             />
             <button
               onClick={buscarAlimento}
-              className="shrink-0 inline-flex items-center justify-center rounded-btn px-4"
-              style={{ background: 'var(--color-primario)', color: 'var(--color-sobre-primario)' }}
+              className="btn-dorado inline-flex shrink-0 items-center justify-center px-4"
+              style={{ borderRadius: 14 }}
             >
               <Search size={18} />
             </button>

@@ -278,9 +278,11 @@ export default function OnboardingPage() {
       <style jsx global>{`
         .input-base {
           width: 100%;
-          border-radius: var(--radio-btn);
-          padding: 0.75rem;
-          font-size: 1rem;
+          height: 54px;
+          border-radius: 16px;
+          padding: 0 18px;
+          font-size: 16px;
+          font-weight: 600;
           outline: none;
           background: var(--color-superficie-alt);
           border: 1px solid var(--color-borde);
@@ -292,7 +294,7 @@ export default function OnboardingPage() {
 }
 
 function Titulo({ children }: { children: React.ReactNode }) {
-  return <h2 className="text-2xl font-bold mb-1">{children}</h2>;
+  return <h2 className="mb-1 text-[27px] font-extrabold" style={{ letterSpacing: '-0.7px' }}>{children}</h2>;
 }
 
 function Campo({ label, children }: { label: string; children: React.ReactNode }) {
@@ -349,8 +351,8 @@ function Boton({ children, onClick, disabled }: {
 }) {
   return (
     <button onClick={onClick} disabled={disabled}
-      className="w-full inline-flex items-center justify-center gap-1 rounded-btn py-3.5 text-base font-semibold transition-opacity disabled:opacity-40"
-      style={{ background: 'var(--color-primario)', color: 'var(--color-sobre-primario)' }}>
+      className="btn-dorado inline-flex w-full items-center justify-center gap-1.5 text-base font-extrabold transition-opacity disabled:opacity-50"
+      style={{ height: 56, borderRadius: 18 }}>
       {children} <ChevronRight size={18} />
     </button>
   );

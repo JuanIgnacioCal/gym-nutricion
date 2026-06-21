@@ -125,8 +125,8 @@ export default function BuscarPage() {
   const tipos = slots.map((s) => ({ value: s.value, label: s.label }));
 
   return (
-    <main className="min-h-screen px-4 pt-6">
-      <h1 className="text-xl font-bold mb-4 text-center">Buscar alimento</h1>
+    <main className="min-h-screen px-5" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 22px)' }}>
+      <h1 className="mb-4 text-[27px] font-extrabold" style={{ letterSpacing: '-0.7px' }}>Buscar alimento</h1>
 
       <div className="flex gap-2 mb-4">
         <input
@@ -134,13 +134,13 @@ export default function BuscarPage() {
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && buscar()}
           placeholder="Buscar alimento... ej: arroz, pechuga, manzana"
-          className="w-full rounded-btn px-4 py-3 text-base outline-none"
-          style={{ background: 'var(--color-superficie)', border: '1px solid var(--color-borde)', color: 'var(--color-texto)' }}
+          className="w-full outline-none"
+          style={{ height: 52, borderRadius: 16, padding: '0 16px', fontSize: 15, fontWeight: 500, background: 'var(--color-superficie-alt)', border: '1px solid var(--color-borde)', color: 'var(--color-texto)' }}
         />
         <button
           onClick={buscar}
-          className="shrink-0 inline-flex items-center justify-center rounded-btn px-4"
-          style={{ background: 'var(--color-primario)', color: 'var(--color-sobre-primario)' }}
+          className="btn-dorado inline-flex shrink-0 items-center justify-center px-4"
+          style={{ borderRadius: 14 }}
         >
           <Search size={20} />
         </button>
