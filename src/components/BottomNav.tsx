@@ -1,10 +1,11 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ClipboardList, Plus, Search, Heart } from 'lucide-react';
+import { ClipboardList, CalendarDays, Plus, Search, Heart } from 'lucide-react';
 
 const ITEMS = [
   { href: '/plan', label: 'Plan', Icon: ClipboardList },
+  { href: '/semana', label: 'Semana', Icon: CalendarDays },
   { href: '/registrar', label: 'Registrar', Icon: Plus },
   { href: '/buscar', label: 'Buscar', Icon: Search },
   { href: '/favoritos', label: 'Favoritos', Icon: Heart },

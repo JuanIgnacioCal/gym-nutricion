@@ -260,7 +260,11 @@ export default function OnboardingPage() {
               <p className="text-[11px] leading-snug text-center px-1 mb-3" style={{ color: 'var(--color-texto-sec)' }}>
                 Al crear tu cuenta aceptás que esta app brinda <strong>orientación nutricional general</strong> y no
                 reemplaza el consejo de un profesional de la salud. Tus datos se usan únicamente para generar tu
-                plan (Ley 25.326 de Protección de Datos Personales).
+                plan (Ley 25.326 de Protección de Datos Personales).{' '}
+                <a href="/legal" target="_blank" rel="noopener noreferrer"
+                  style={{ color: 'var(--color-primario)', fontWeight: 600 }}>
+                  Términos y privacidad
+                </a>.
               </p>
               <Boton onClick={finalizar} disabled={guardando}>
                 {guardando ? 'Creando tu cuenta…' : 'Ver mi plan de hoy'}

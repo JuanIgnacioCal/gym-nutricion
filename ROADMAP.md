@@ -1,63 +1,91 @@
 # ROADMAP — gym-nutricion
 
-**Estado:** app funcional para el socio (plan diario, recetas, búsqueda de alimentos, registro, favoritos) con autenticación ya desplegada en Railway. Lo que sigue, ordenado para convertirla en un producto vendible a gimnasios.
+_Documento único de planeamiento. Consolida lo que antes estaba en ROADMAP.md + PLAN_DE_MEJORAS.md + PLAN_v2_FUNCIONES.html. Actualizado: 2026-06-20._
+
+**Estado:** PWA white-label funcional y desplegada en Railway (auth, plan diario, recetas, búsqueda de alimentos en español, registro, favoritos, calculadora de calorías, panel del dueño). Lo que sigue, ordenado para convertirla en un producto vendible a gimnasios.
+
+Leyenda: **[yo]** lo programo y vos pusheás · **[vos]** acción tuya (Railway/pago/decisión). Esfuerzo: **S** <1h · **M** unas horas · **L** 1+ día.
 
 ---
 
-## Tier 1 — Bases antes de cobrarle a un gym (cimientos, no features)
+## ✅ Ya hecho
 
-- **Persistencia de datos:** confirmar Volume en Railway (o migrar a Supabase). Si un deploy borra los usuarios, el producto es invendible.
-- **Seguridad de las API:** que `/api/plan`, `/api/favoritos` y `/api/registro` verifiquen la cookie de sesión y NO confíen en un `usuario_id` mandado por el cliente (hoy un socio podría leer datos de otro).
-- **Recuperar contraseña:** hoy si un socio la olvida queda afuera para siempre.
-- **Disclaimer + privacidad:** "es orientación nutricional, no consejo médico" + política de datos básica (en Argentina rige la Ley 25.326). Bajo esfuerzo, alto riesgo legal si falta.
-
-## Tier 2 — Lado del comprador (lo que te deja vender y facturar)
-
-- **Panel del dueño del gym:** lista de socios, cuántos están activos (métrica con la que cobrás el abono) y su uso. Sin esto no podés mostrar valor ni facturar bien ni evitar bajas.
-- **Alta de gyms más simple:** hoy cada gym es un deploy manual con su `gym.config.json`. Para los primeros 2-3 alcanza; después hay que pensar multi-tenant o un proceso de alta.
-
-## Tier 3 — Retención del socio
-
-- **Seguimiento de progreso:** registrar peso en el tiempo + gráficos (`recharts` ya está instalado y sin usar) + racha de adherencia. Es lo que hace que el socio vea resultados y no abandone.
-- **Lista de compras del plan:** los datos ya existen; práctico y muy pedido. Bajo esfuerzo, alto valor.
-- **Restricciones dietarias en el PLAN:** hoy el filtro "vegetariano" existe solo en el catálogo, pero el plan generado no respeta restricciones ni alergias. Sumar al perfil + al algoritmo.
-- **Notificaciones push:** recordatorios de registrar comidas / ver el plan. Sube mucho el uso diario (ojo: en iPhone es más complejo).
-
-## Tier 4 — Cobranza
-
-- **Mercado Pago** para el abono (estándar en Argentina), cuando ya tengas gyms confirmados.
+- **Auth completa:** tabla `usuarios` (email + bcrypt), JWT en cookie httpOnly, login/registro, middleware de protección. Desplegado.
+- **Persistencia Railway:** Volume en `/data` + `DATABASE_PATH`. Los socios no se borran entre deploys.
+- **Seguridad cerrada y verificada:** IDOR cerrado (`plan`, `favoritos`, `registro`, `cambiar` derivan `usuario_id` de la sesión; los DELETE chequean dueño). `JWT_SECRET` sin fallback inseguro (revienta si falta) y seteado fuerte en Railway. `POST /api/recetas` exige sesión.
+- **Calculadora de calorías:** `calcularTDEE` (Mifflin-St Jeor) en `lib/calorias.ts`; el onboarding pide peso/altura/edad/sexo/actividad/objetivo y sugiere kcal + macros (editable).
+- **Editar objetivo / recalcular:** arreglado el bug de guardado (antes solo localStorage → se perdía al recargar). Ahora `PUT /api/auth/me` persiste en la DB. Incluye recalcular desde datos físicos y cambiar bajar/mantener/subir.
+- **Búsqueda en español:** se sacó USDA del camino en vivo. Orden actual: `ingredientes.json` (curada, español) → Open Food Facts (español/AR). `ingredientes.json` tiene 70 ingredientes con macros reales (`usda_fdcId` para auditar).
+- **Recetas:** +28 desayunos/meriendas nuevas (ids 244-271) con macros reales y pasos. Desayuno/merienda pasó de 59 a 87. Escalado de porciones (`escalarIngrediente`). No repetir receta usada por el usuario en los últimos 14 días por slot. Receta duplicada (id 200) borrada.
+- **Panel del dueño:** `/panel` protegido por `ownerEmail`, endpoint `GET /api/panel` con KPIs (total, activos 7/30 días, altas del mes), gráfico de actividad (recharts), tabla de socios ordenable y distribución de objetivos. Acceso visible en el menú solo para el dueño.
+- **Plan semanal:** página `/semana` (selector de día Lun–Dom, generar/regenerar semana, cambiar comida puntual) + endpoint `GET/POST /api/plan/semana`. Genera 7 días reusando el motor diario (sin cambiar el esquema) y no repite recetas entre días. `/plan` (el día a día) quedó intacto.
+- **Disclaimer legal + privacidad:** página `/legal` completa (términos + uso de datos, Ley 25.326), enlazada desde el onboarding y el menú; ruta pública en el middleware. El onboarding y `/plan` ya tenían el aviso resumido.
 
 ---
 
-## Recetas — pasos de preparación
+## 🔴 Bloqueantes para VENDER (sin esto, no cobres)
 
-- **Problema:** las 223 recetas no tienen pasos ni `url_original` (está vacío). Hay que escribirlos; no hay de dónde copiarlos.
-- **Esquema:** agregar campo `pasos: string[]` a la receta (y actualizar `src/types/index.ts`).
-- **Manual y eficiente:** no hacer las 223 de una. Priorizar las que más aparecen en los planes / las más comunes, de a 10-20. Cargar editando `recetas.json` o con una mini pantalla de admin.
-- **Nota honesta:** los pasos NO son un dato sensible como los macros (que deben ser reales y verificables). Para recetas simples se pueden generar en lote con un LLM (incluso gratis) y revisar. No es lo mismo que inventar macros.
+1. **Railway: pasar a plan pago** · S · **[vos]** — el trial se pausa solo. No podés vender algo que Railway apaga. Hacelo antes del primer cliente.
+2. ✅ **Disclaimer legal + privacidad** — HECHO (página `/legal` + enlaces). Pendiente tuyo: poner el contacto real del gym en el texto y, si querés, que un profesional lo revise antes de vender.
+3. **Reset de contraseña** · M · **[yo + decisión tuya]** — hoy si un socio olvida la clave queda afuera. Necesita un servicio de email (Resend, Brevo, SMTP Gmail). **Decisión pendiente:** cuál. Alternativa interina: que el dueño resetee la clave desde el panel. (No lo hice ahora: necesita tu decisión y credenciales de email.)
 
-## Base de datos de macros (la búsqueda de alimentos)
+## 🟠 Seguridad / calidad (menores, hacer pronto)
 
-- **Bug actual:** la base curada tiene solo 46 ingredientes y el fallback es USDA, que está en inglés → "cebolla"/"zapallito" no devuelven nada y no aparecen productos argentinos.
-- **MyFitnessPal:** base propia crowdsourced; API privada, no aceptan solicitudes → no se puede usar. (Scrapers de terceros = violan términos + frágiles, no para un producto que vendés.)
-- **FatSecret** (lo más parecido a MFP): 1.9M alimentos, multilingüe, 58 países… pero el tier gratis (Basic y Premier Free) es **solo US/inglés**; español + Argentina es **Premier pago** (cotizan por país).
-- **Edamam / Nutritionix:** caros (US$999–1850/mes) y centrados en inglés.
-- **USDA:** gratis y preciso, pero inglés y sin alimentos argentinos.
-- **Open Food Facts:** gratis y abierto (ODbL), 3M+ productos, multilingüe, bueno para productos ENVASADOS argentinos (código de barras). Flojo para alimentos crudos/genéricos.
-- **Argenfoods (UNLU) + SARA 2 (tabla oficial ENNyS 2):** composición REAL de alimentos argentinos, en español, por 100 g, gratis — pero son Excel/PDF, no una API.
-
-**Recomendación (la mejor, no la más fácil): ser dueño de tu propia base.**
-1. **Expandir `ingredientes.json`** desde Argenfoods/SARA (Argentina, español, gratis) con un script que parsea el Excel → JSON con `provenance`. Pasar de 46 a ~250-400 alimentos comunes. Arregla cebolla/zapallito de una, sin costo recurrente y con datos reales.
-2. **Open Food Facts** para productos de marca/supermercado + código de barras (futuro killer feature).
-3. **Arreglar el orden de búsqueda:** hoy es curada → USDA(inglés) → OFF. Sacar USDA del camino en vivo (usarlo solo offline para curar) y dejar curada → OFF.
-4. **NO cambiar la DB de la app** (SQLite/Postgres). Eso es otra capa; lo que cambia es la FUENTE de macros.
-5. **FatSecret Premier (pago)** recién si escalás y la facturación lo justifica.
+- **Middleware: verificar firma del JWT** · M · **[yo]** — hoy solo chequea que la cookie exista. Migrar a `jose` (compatible con Edge) para validar firma también ahí.
+- ✅ **Validar `receta_id` en `PATCH /api/plan`** — ya estaba implementado.
+- ✅ **Sanear `limite` en `GET /api/recetas`** — ya estaba implementado (clamp 1–500).
+- ✅ **`clearAuthCookie` con `secure`/`sameSite`** — ya estaba implementado.
+- **Login resistente a timing** · S — comparar siempre contra un hash dummy aunque el email no exista (evita enumerar emails). Pendiente, toca `/api/auth/login`. (Lo dejé para una tanda que puedas buildear y probar.)
+- **Id estable en Open Food Facts** · S — hoy usa `Math.random()` si falta el code → rompe dedupe/favoritos. Usar hash del nombre. Pendiente, toca `/api/buscar`.
+- **Limpiar `usuario_id` vestigial del cliente** · S — el cliente sigue mandándolo (el server lo ignora). Código muerto. Pendiente.
 
 ---
 
-### Fuentes
-- MyFitnessPal API (acceso privado): https://tryterra.co/integrations/myfitnesspal
-- FatSecret ediciones y precios (free = US/inglés): https://platform.fatsecret.com/api-editions
-- Argenfoods (UNLU): https://www.argenfood.unlu.edu.ar/
-- Open Food Facts API: https://openfoodfacts.github.io/openfoodfacts-server/api/
-- Comparativa de APIs de nutrición: https://www.spikeapi.com/blog/top-nutrition-apis-for-developers-2026
+## 🟡 Funciones de producto (orden sugerido)
+
+1. ✅ **Plan semanal** — HECHO (página `/semana` + endpoint `/api/plan/semana`, sin cambiar el esquema, no repite recetas entre días). Es la base de la lista de compras.
+2. **Ingredientes estructurados** `{nombre, cantidad, unidad}` · M/L · **[yo + datos]** — ← PRÓXIMO GRANDE. Hoy son texto suelto. Estructurarlos destraba de una sola vez: lista de compras, match con la base de macros, y filtros dietarios reales en el plan. Vale más que cualquier API.
+3. **Integración con la app de lista de compras** (es tuya) · M · **[yo + vos]** — junta los ingredientes de la semana, los suma por ingrediente y unidad, redondea (g/kg) y los empuja a tu lista. Toggle en el menú + notificación in-app. Depende de #1 y #2. (Ver "Datos que necesito de vos".)
+4. **Más desayunos/meriendas en 450–800 kcal** · M · **[datos]** — era el cuello de botella de variedad (solo había 1 receta >600 kcal). Ya se sumaron 10 en 600–800; conviene seguir hasta ~60–70 bien distribuidas. Almuerzo/cena (183) está sobrado, no tocar.
+
+## 🧪 Hallazgos de testeo (revisar si siguen vigentes tras los últimos cambios)
+
+- **T1 — Variedad del plan** · M — repetía casi siempre las mismas recetas. Mitigado con la exclusión de 14 días + más recetas; validar si persiste. (Tensión con T2: más variedad ⇄ menos precisión de macros.)
+- **T2 — No pega justo los objetivos** · M — el total se acerca pero no exacto. El algoritmo ya balancea las 4 macros; validar contra objetivos reales.
+- **T3 — Registrar "comido" desde la tarjeta del plan** · S — hoy solo desde la sección Registrar. Quick win de comodidad.
+
+---
+
+## 🟢 Retención (después del primer "sí")
+
+- **Seguimiento de progreso del socio** · M — peso en el tiempo + gráficos (recharts) + racha de adherencia. Engancha y muestra resultados.
+- **Restricciones dietarias en el PLAN** · M — hoy "vegetariano" filtra solo el catálogo; el plan generado no respeta restricciones ni alergias. Sumar al perfil + al algoritmo.
+- **Notificaciones / recordatorios push** · M/L — sube mucho el uso diario (iOS es más complejo; ya hay `sw.js`).
+- **Mercado Pago** · L — solo si el gym quiere cobrarle el beneficio al socio desde la app.
+
+## 🔵 Escalabilidad (antes de muchos gyms)
+
+- **Modelo multi-gym** · L — hoy es un deploy manual por gym con su `gym.config.json`. Con 2-3 lo bancás; con 10 hay que decidir: multi-tenant (una instancia, varios gyms) vs. automatizar el deploy.
+- **Supabase (PostgreSQL)** · L — **solo** si se mueve a Vercel u otro serverless. En Railway con volumen, NO urgente.
+
+---
+
+## Fuentes de macros (referencia para la "tanda 2" de ingredientes)
+
+Regla del proyecto: los macros son SIEMPRE reales y verificables, nunca inventados; guardar la fuente (`usda_fdcId` o equivalente).
+
+- **Argenfoods (UNLu) + SARA 2 (ENNyS 2):** composición real de alimentos argentinos, español, por 100 g, gratis. Es Excel/PDF (no API) → curar a mano. **La mejor fuente para crudos.** Expandir `ingredientes.json` de 70 a ~250-400 con un script que parsea el Excel → JSON con `provenance`.
+- **Open Food Facts:** gratis y abierto, productos envasados argentinos + código de barras (futuro killer feature). Flojo para crudos/genéricos. Ya integrado.
+- **FatSecret Premier:** 1.9M items multilingües, pero datos de Argentina = plan pago (cotizan por país). Solo si escalás y la facturación lo justifica.
+- **USDA:** gratis y preciso pero inglés. Fuera del camino en vivo; usar solo offline para curar.
+- **Descartado:** lector de tickets con IA de visión (caro, frágil, no cierra ventas) y MyFitnessPal (API privada, no aceptan solicitudes).
+
+Links: Argenfoods https://www.argenfood.unlu.edu.ar/ · Open Food Facts https://openfoodfacts.github.io/openfoodfacts-server/api/ · FatSecret https://platform.fatsecret.com/api-editions
+
+---
+
+## Datos que necesito de vos (para la integración de lista de compras)
+
+1. ¿Tu app de lista tiene un endpoint HTTP donde mandar items? ¿Con qué stack está y qué auth usa (¿alcanza un token?)?
+2. ¿Cómo se identifica el mismo usuario en las dos apps? ¿Mismo email? ¿Un código que el usuario pega para vincular?
+3. ¿Tu lista guarda cantidades estructuradas (cantidad + unidad) o texto libre? ¿Te los mando ya sumados y redondeados, o crudos?

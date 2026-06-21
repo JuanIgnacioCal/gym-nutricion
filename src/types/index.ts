@@ -177,3 +177,18 @@ export interface PanelData {
   kcalPromedio: number;
   comidasSplit: { tres: number; cuatro: number };
 }
+
+/** Plan de un día serializado (recetas ya escaladas a la porción del objetivo). */
+export interface PlanDiaJSON {
+  fecha: string;
+  desayuno: Receta | null;
+  almuerzo: Receta | null;
+  merienda: Receta | null;
+  cena: Receta | null;
+}
+
+/** Respuesta de /api/plan/semana: 7 días desde `inicio` (lunes). Cada día null si no tiene plan. */
+export interface PlanSemana {
+  inicio: string;
+  dias: (PlanDiaJSON | null)[];
+}

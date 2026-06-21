@@ -363,7 +363,10 @@ export default function HamburgerMenu({ abierto, onClose, onPerfilActualizado }:
 
             {/* Footer */}
             <footer className="mt-2 text-center text-xs" style={{ color: 'var(--color-texto-sec)' }}>
-              <p>v1.0 — Prototipo</p>
+              <button onClick={() => irA('/legal')} className="underline" style={{ color: 'var(--color-texto-sec)' }}>
+                Términos y privacidad
+              </button>
+              <p className="mt-1">v1.0 — Prototipo</p>
               <p>{gym.nombre} · Tucumán</p>
             </footer>
           </div>

@@ -77,18 +77,20 @@ export default function MealSlot({
             </button>
           )}
           <div className="flex gap-2">
-            <button
-              onClick={() => onFavorito?.(receta)}
-              className="flex-1 inline-flex items-center justify-center gap-1 rounded-btn py-2 text-sm"
-              style={{ border: '1px solid var(--color-borde)', color: 'var(--color-texto)' }}
-            >
-              <Heart
-                size={15}
-                fill={favorito ? 'var(--color-primario)' : 'none'}
-                stroke="var(--color-primario)"
-              />
-              Favorito
-            </button>
+            {onFavorito && (
+              <button
+                onClick={() => onFavorito(receta)}
+                className="flex-1 inline-flex items-center justify-center gap-1 rounded-btn py-2 text-sm"
+                style={{ border: '1px solid var(--color-borde)', color: 'var(--color-texto)' }}
+              >
+                <Heart
+                  size={15}
+                  fill={favorito ? 'var(--color-primario)' : 'none'}
+                  stroke="var(--color-primario)"
+                />
+                Favorito
+              </button>
+            )}
             <button
               onClick={onCambiar}
               disabled={cargandoCambio}

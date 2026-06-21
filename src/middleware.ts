@@ -15,7 +15,7 @@ import { NextRequest, NextResponse } from 'next/server';
  * Si más adelante se quiere verificar la firma también acá, migrar a `jose`
  * (compatible con Edge).
  */
-const RUTAS_PUBLICAS = ['/login', '/onboarding'];
+const RUTAS_PUBLICAS = ['/login', '/onboarding', '/legal'];
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
