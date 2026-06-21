@@ -8,7 +8,15 @@ interface MacroChipsProps {
   size?: 'sm' | 'md';
 }
 
-/** Fila de chips de macros reutilizable: 🔥 kcal · 🥩 prot · 🌾 carbs · 💧 grasas */
+// Colores de macro (semánticos, fijos): kcal sigue la marca; el resto son fijos del sistema.
+const DOTS = {
+  kcal: 'var(--color-primario)',
+  prot: '#FF6B5E',
+  carbs: '#E0A93B',
+  gras: '#5AA9E6',
+};
+
+/** Badges de macros estilo prototipo: dot de color + valor, sobre superficie tenue. */
 export default function MacroChips({
   calorias,
   proteinas,
@@ -16,28 +24,24 @@ export default function MacroChips({
   grasas,
   size = 'md',
 }: MacroChipsProps) {
-  const chips = [
-    { icon: '🔥', valor: `${Math.round(calorias)} kcal` },
-    { icon: '🥩', valor: `${Math.round(proteinas)}g prot` },
-    { icon: '🌾', valor: `${Math.round(carbohidratos)}g carbs` },
-    { icon: '💧', valor: `${Math.round(grasas)}g grasas` },
+  const items = [
+    { dot: DOTS.kcal, valor: `${Math.round(calorias)} kcal` },
+    { dot: DOTS.prot, valor: `${Math.round(proteinas)}g prot` },
+    { dot: DOTS.carbs, valor: `${Math.round(carbohidratos)}g carbs` },
+    { dot: DOTS.gras, valor: `${Math.round(grasas)}g grasas` },
   ];
-  const pad = size === 'sm' ? 'px-2 py-0.5 text-[11px]' : 'px-2.5 py-1 text-xs';
+  const pad = size === 'sm' ? 'px-2 py-1 text-[11px]' : 'px-2.5 py-1.5 text-xs';
 
   return (
     <div className="flex flex-wrap gap-1.5">
-      {chips.map((c) => (
+      {items.map((c) => (
         <span
           key={c.valor}
-          className={`inline-flex items-center gap-1 rounded-full ${pad}`}
-          style={{
-            background: 'transparent',
-            color: 'var(--color-texto)',
-            border: '1px solid var(--color-primario)',
-          }}
+          className={`inline-flex items-center gap-1.5 font-bold ${pad}`}
+          style={{ borderRadius: 10, background: 'var(--color-superficie-alt)', color: 'var(--color-texto)' }}
         >
-          <span>{c.icon}</span>
-          <span>{c.valor}</span>
+          <span style={{ width: 7, height: 7, borderRadius: 2, background: c.dot, flex: 'none' }} />
+          {c.valor}
         </span>
       ))}
     </div>

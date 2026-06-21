@@ -1,14 +1,13 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Menu } from 'lucide-react';
+import { Menu, RotateCw, ClipboardCheck } from 'lucide-react';
 import type { PlanDiario, Receta, TipoComida, UserProfile, MacroTotales } from '@/types';
 import { getUserAsync, aplicarTema } from '@/lib/usuario';
 import {
   fechaHoy,
   fechaLarga,
   slotsDe,
-  colorChip,
   sumarMacros,
   macrosVacios,
   labelSlot,
@@ -100,7 +99,6 @@ export default function PlanPage() {
           `&grasas=${perfil.objetivo.grasas}`
       );
       if (res.ok) {
-        // Cambiar un slot reescala las porciones de todo el plan: re-traemos el plan completo ya ajustado.
         const planRes = await fetch(`/api/plan?usuario_id=${perfil.id}&fecha=${fecha}`);
         setPlan(await planRes.json());
       } else {
@@ -153,7 +151,6 @@ export default function PlanPage() {
         gramos: 0,
       }),
     });
-    // Refrescar los totales consumidos del día.
     const regRes = await fetch(`/api/registro?usuario_id=${perfil.id}&fecha=${fecha}`);
     const registros = await regRes.json();
     setConsumido(sumarMacros(Array.isArray(registros) ? registros : []));
@@ -171,63 +168,81 @@ export default function PlanPage() {
   const faltanKcal = Math.max(0, obj.calorias - totalesPlan.calorias);
 
   const chips = [
-    { icon: '🔥', val: Math.round(consumido.calorias), obj: obj.calorias, u: 'kcal' },
-    { icon: '🥩', val: Math.round(consumido.proteinas), obj: obj.proteinas, u: 'g prot' },
-    { icon: '🌾', val: Math.round(consumido.carbohidratos), obj: obj.carbohidratos, u: 'g carbs' },
-    { icon: '💧', val: Math.round(consumido.grasas), obj: obj.grasas, u: 'g gras' },
+    { label: 'kcal', dot: 'var(--color-primario)', val: Math.round(consumido.calorias), obj: obj.calorias },
+    { label: 'prot', dot: '#FF6B5E', val: Math.round(consumido.proteinas), obj: obj.proteinas },
+    { label: 'carbs', dot: '#E0A93B', val: Math.round(consumido.carbohidratos), obj: obj.carbohidratos },
+    { label: 'grasas', dot: '#5AA9E6', val: Math.round(consumido.grasas), obj: obj.grasas },
   ];
 
   return (
     <main className="min-h-screen">
-      {/* Header */}
-      <header className="px-4 pt-5 pb-3">
+      <header className="px-5 pb-3" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 22px)' }}>
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-xl font-bold">Buen día, {perfil.nombre}</p>
-            <p className="text-sm capitalize" style={{ color: 'var(--color-texto-sec)' }}>
+            <h1 className="text-[27px] font-extrabold" style={{ letterSpacing: '-0.7px' }}>
+              Buen día, {perfil.nombre}
+            </h1>
+            <p className="mt-1 text-sm font-medium capitalize" style={{ color: 'var(--color-texto-sec)' }}>
               {fechaLarga()}
             </p>
           </div>
-          <button onClick={() => setMenuAbierto(true)} aria-label="Menú" className="p-1">
-            <Menu size={26} />
+          <button
+            onClick={() => setMenuAbierto(true)}
+            aria-label="Menú"
+            className="flex h-[42px] w-[42px] flex-none items-center justify-center"
+            style={{ borderRadius: 14, background: 'var(--color-superficie-alt)', border: '1px solid var(--color-borde)' }}
+          >
+            <Menu size={20} />
           </button>
         </div>
 
-        {/* Chips de macros del día (consumido vs objetivo) */}
-        <div className="mt-3 flex gap-2 overflow-x-auto scrollbar-none">
+        <div className="mt-4 flex gap-2">
           {chips.map((c) => (
-            <span
-              key={c.u}
-              className="inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-xs"
-              style={{ background: 'var(--color-superficie)', border: '1px solid var(--color-borde)' }}
+            <div
+              key={c.label}
+              className="flex-1"
+              style={{ borderRadius: 16, padding: '12px 13px', background: 'var(--color-superficie)', border: '1px solid var(--color-borde)' }}
             >
-              <span>{c.icon}</span>
-              <span style={{ color: colorChip(c.val, c.obj) }}>
-                {c.val}/{c.obj}
-              </span>
-              <span style={{ color: 'var(--color-texto-sec)' }}>{c.u}</span>
-            </span>
+              <div className="mb-1 flex items-center gap-1.5">
+                <span style={{ width: 8, height: 8, borderRadius: 3, background: c.dot }} />
+                <span className="text-[11px] font-semibold" style={{ color: 'var(--color-texto-sec)' }}>
+                  {c.label}
+                </span>
+              </div>
+              <div className="text-[15px] font-extrabold" style={{ color: 'var(--color-texto)' }}>
+                {c.val}
+                <span className="text-xs font-semibold" style={{ color: 'var(--color-texto-3)' }}>
+                  /{c.obj}
+                </span>
+              </div>
+            </div>
           ))}
         </div>
       </header>
 
-      <div className="px-4 flex flex-col gap-3">
+      <div className="flex flex-col gap-4 px-5 pt-1">
         {cargando ? (
           <Cargando inline />
         ) : !hayPlan ? (
-          <div className="py-10 text-center flex flex-col items-center gap-4">
-            <p style={{ color: 'var(--color-texto-sec)' }}>
-              Todavía no generaste tu plan de hoy.
+          <div className="animar-entrada flex flex-col items-center gap-4 py-10 text-center">
+            <div
+              className="flex items-center justify-center"
+              style={{ width: 80, height: 80, borderRadius: '50%', background: 'radial-gradient(circle, color-mix(in srgb, var(--color-primario) 20%, transparent), transparent 70%)' }}
+            >
+              <ClipboardCheck size={36} strokeWidth={1.8} style={{ color: 'var(--color-primario)' }} />
+            </div>
+            <p className="text-base font-semibold" style={{ color: 'var(--color-texto-soft)', maxWidth: 230, lineHeight: 1.4 }}>
+              Todavía no generaste tu plan de hoy
             </p>
             <button
               onClick={generarPlan}
               disabled={generando}
-              className="rounded-btn px-6 py-3.5 text-base font-semibold inline-flex items-center gap-2 disabled:opacity-60"
-              style={{ background: 'var(--color-primario)', color: 'var(--color-sobre-primario)' }}
+              className="btn-dorado flex h-[54px] items-center gap-2 px-7 text-base font-extrabold disabled:opacity-60"
+              style={{ borderRadius: 16 }}
             >
               {generando && (
                 <span
-                  className="w-4 h-4 border-2 rounded-full animate-spin"
+                  className="h-[18px] w-[18px] animate-spin rounded-full border-2"
                   style={{ borderColor: 'var(--color-sobre-primario)', borderTopColor: 'transparent' }}
                 />
               )}
@@ -250,33 +265,35 @@ export default function PlanPage() {
               />
             ))}
 
-            {/* Totales del plan vs objetivo */}
-            <section
-              className="rounded-card p-4 flex flex-col gap-3 mt-1"
-              style={{ background: 'var(--color-superficie)', border: '1px solid var(--color-borde)' }}
-            >
-              <h3 className="font-semibold">Totales del plan</h3>
-              <MacroBar label="Calorías" consumido={totalesPlan.calorias} objetivo={obj.calorias} unidad=" kcal" />
-              <MacroBar label="Proteínas" consumido={totalesPlan.proteinas} objetivo={obj.proteinas} />
-              <MacroBar label="Carbohidratos" consumido={totalesPlan.carbohidratos} objetivo={obj.carbohidratos} />
-              <MacroBar label="Grasas" consumido={totalesPlan.grasas} objetivo={obj.grasas} />
-              <p className="text-sm" style={{ color: 'var(--color-texto-sec)' }}>
+            <section style={{ borderRadius: 22, padding: 18, background: 'var(--color-superficie)', border: '1px solid var(--color-borde)' }}>
+              <h3 className="mb-3.5 text-[17px] font-extrabold" style={{ letterSpacing: '-0.4px' }}>
+                Totales del plan
+              </h3>
+              <div className="flex flex-col gap-3">
+                <MacroBar label="Calorías" consumido={totalesPlan.calorias} objetivo={obj.calorias} unidad=" kcal" />
+                <MacroBar label="Proteínas" consumido={totalesPlan.proteinas} objetivo={obj.proteinas} />
+                <MacroBar label="Carbohidratos" consumido={totalesPlan.carbohidratos} objetivo={obj.carbohidratos} />
+                <MacroBar label="Grasas" consumido={totalesPlan.grasas} objetivo={obj.grasas} />
+              </div>
+              <p className="mt-3 text-[13px] font-medium" style={{ color: 'var(--color-texto-sec)' }}>
                 {faltanKcal > 0
-                  ? `Te faltan ${faltanKcal} kcal para llegar a tu objetivo.`
-                  : 'Tu plan cubre tu objetivo de calorías. 💪'}
+                  ? `Te faltan ${faltanKcal} kcal para tu objetivo.`
+                  : 'Tu plan cubre tu objetivo de calorías 💪'}
               </p>
               <button
                 onClick={generarPlan}
                 disabled={generando}
-                className="rounded-btn py-2.5 text-sm font-medium disabled:opacity-60"
-                style={{ border: '1px solid var(--color-borde)' }}
+                className="mt-3 flex h-[46px] w-full items-center justify-center gap-2 text-sm font-bold disabled:opacity-60"
+                style={{ borderRadius: 13, border: '1px solid var(--color-borde)', color: 'var(--color-texto)' }}
               >
-                {generando ? 'Generando...' : '↻ Regenerar plan completo'}
+                <RotateCw size={15} className={generando ? 'animate-spin' : ''} />
+                {generando ? 'Generando...' : 'Regenerar plan'}
               </button>
             </section>
           </>
         )}
-        <p className="pt-1 pb-2 text-[10px] text-center" style={{ color: 'var(--color-texto-sec)' }}>
+
+        <p className="px-1 pb-2 pt-1 text-center text-xs font-medium" style={{ color: 'var(--color-texto-3)', lineHeight: 1.5 }}>
           Orientación nutricional general · no reemplaza el consejo de un profesional de la salud.
         </p>
       </div>
@@ -297,9 +314,9 @@ export default function PlanPage() {
 
 function Cargando({ inline }: { inline?: boolean }) {
   return (
-    <div className={inline ? 'py-10 flex justify-center' : 'flex items-center justify-center h-screen'}>
+    <div className={inline ? 'flex justify-center py-10' : 'flex h-screen items-center justify-center'}>
       <div
-        className="w-8 h-8 border-2 rounded-full animate-spin"
+        className="h-8 w-8 animate-spin rounded-full border-2"
         style={{ borderColor: 'var(--color-primario)', borderTopColor: 'transparent' }}
       />
     </div>

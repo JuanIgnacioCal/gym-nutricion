@@ -29,62 +29,75 @@ export default function MealSlot({
   const [detalle, setDetalle] = useState(false);
   return (
     <div
-      className="rounded-card p-4 flex flex-col gap-3 animar-entrada"
-      style={{ background: 'var(--color-superficie)', border: '1px solid var(--color-borde)' }}
+      className="animar-entrada flex flex-col gap-3"
+      style={{ borderRadius: 24, background: 'var(--color-superficie)', border: '1px solid var(--color-borde)', padding: 18 }}
     >
       <div className="flex items-center justify-between">
-        <span className="font-semibold" style={{ color: 'var(--color-primario)' }}>
+        <span className="text-[13px] font-extrabold tracking-wide" style={{ color: 'var(--color-primario)' }}>
           {titulo}
         </span>
-        <span className="text-xs" style={{ color: 'var(--color-texto-sec)' }}>
+        <span className="text-[13px] font-semibold" style={{ color: 'var(--color-texto-3)' }}>
           {hora}
         </span>
       </div>
 
       {receta ? (
         <>
-          <button
-            onClick={() => setDetalle(true)}
-            className="text-left flex items-center justify-between gap-2"
-          >
-            <h3 className="text-lg font-bold leading-tight">{receta.nombre}</h3>
-            <Info size={16} className="shrink-0" style={{ color: 'var(--color-primario)' }} />
-          </button>
+          <div className="flex items-start justify-between gap-3">
+            <button onClick={() => setDetalle(true)} className="min-w-0 text-left">
+              <h3 className="text-[18px] font-extrabold leading-tight" style={{ letterSpacing: '-0.4px' }}>
+                {receta.nombre}
+              </h3>
+            </button>
+            <button
+              onClick={() => setDetalle(true)}
+              aria-label="Ver receta"
+              className="flex h-[30px] w-[30px] flex-none items-center justify-center rounded-full"
+              style={{ border: '1.5px solid var(--color-primario)', color: 'var(--color-primario)', background: 'transparent' }}
+            >
+              <Info size={16} />
+            </button>
+          </div>
+
           {typeof receta.escala === 'number' && Math.abs(receta.escala - 1) > 0.01 && (
             <span
-              className="self-start text-[11px] px-2 py-0.5 rounded-full font-medium"
-              style={{ background: 'var(--color-superficie-alt)', color: 'var(--color-acento)' }}
+              className="self-start px-2.5 py-1 text-xs font-bold"
+              style={{ borderRadius: 9, background: 'var(--color-superficie-alt)', color: 'var(--color-texto-soft)' }}
             >
               Porción ×{receta.escala}
             </span>
           )}
+
           <MacroChips
             calorias={receta.calorias}
             proteinas={receta.proteinas}
             carbohidratos={receta.carbohidratos}
             grasas={receta.grasas}
           />
-          <div className="flex items-center gap-1 text-xs" style={{ color: 'var(--color-texto-sec)' }}>
+
+          <div className="flex items-center gap-1.5 text-[13px] font-semibold" style={{ color: 'var(--color-texto-3)' }}>
             <Clock size={13} /> {receta.tiempo_total || receta.tiempo_preparacion || 0} min
           </div>
+
           {onRegistrar && (
             <button
               onClick={() => onRegistrar(receta)}
-              className="inline-flex items-center justify-center gap-1.5 rounded-btn py-2 text-sm font-semibold"
-              style={{ background: 'var(--color-primario)', color: 'var(--color-sobre-primario)' }}
+              className="btn-dorado flex h-12 items-center justify-center gap-2 text-[15px] font-extrabold"
+              style={{ borderRadius: 14 }}
             >
-              <Check size={16} /> Comí esto
+              <Check size={17} strokeWidth={3} /> Comí esto
             </button>
           )}
-          <div className="flex gap-2">
+
+          <div className="flex gap-2.5">
             {onFavorito && (
               <button
                 onClick={() => onFavorito(receta)}
-                className="flex-1 inline-flex items-center justify-center gap-1 rounded-btn py-2 text-sm"
-                style={{ border: '1px solid var(--color-borde)', color: 'var(--color-texto)' }}
+                className="flex h-11 flex-1 items-center justify-center gap-1.5 text-[13px] font-bold"
+                style={{ borderRadius: 13, border: '1px solid var(--color-borde)', color: 'var(--color-texto)' }}
               >
                 <Heart
-                  size={15}
+                  size={16}
                   fill={favorito ? 'var(--color-primario)' : 'none'}
                   stroke="var(--color-primario)"
                 />
@@ -94,8 +107,8 @@ export default function MealSlot({
             <button
               onClick={onCambiar}
               disabled={cargandoCambio}
-              className="flex-1 inline-flex items-center justify-center gap-1 rounded-btn py-2 text-sm disabled:opacity-60"
-              style={{ border: '1px solid var(--color-borde)', color: 'var(--color-texto)' }}
+              className="flex h-11 flex-1 items-center justify-center gap-1.5 text-[13px] font-bold disabled:opacity-60"
+              style={{ borderRadius: 13, border: '1px solid var(--color-borde)', color: 'var(--color-texto)' }}
             >
               <RotateCw size={15} className={cargandoCambio ? 'animate-spin' : ''} />
               Cambiar
@@ -103,7 +116,7 @@ export default function MealSlot({
           </div>
         </>
       ) : (
-        <p className="text-sm py-4 text-center" style={{ color: 'var(--color-texto-sec)' }}>
+        <p className="py-4 text-center text-sm" style={{ color: 'var(--color-texto-sec)' }}>
           Sin receta asignada
         </p>
       )}
