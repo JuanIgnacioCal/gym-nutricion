@@ -1,9 +1,9 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { X, ClipboardList, Search, Pencil, Sun, Moon, ChefHat, Apple, Calculator, ChevronDown, BarChart3 } from 'lucide-react';
+import { X, ClipboardList, Search, Pencil, Sun, Moon, ChefHat, Apple, Calculator, ChevronDown, BarChart3, LogOut } from 'lucide-react';
 import type { UserProfile } from '@/types';
-import { getUserAsync, saveUser, aplicarTema } from '@/lib/usuario';
+import { getUserAsync, saveUser, aplicarTema, clearUserLocal } from '@/lib/usuario';
 import { useGymConfig } from '@/lib/useGymConfig';
 import ObjetivosFields, { Objetivo } from './ObjetivosFields';
 import AgregarRecetaModal from './AgregarRecetaModal';
@@ -117,6 +117,17 @@ export default function HamburgerMenu({ abierto, onClose, onPerfilActualizado }:
   const guardarPerfil = async () => {
     const ok = await persistir({ nombre });
     mostrar(ok ? '✅ Perfil actualizado' : '⚠️ Guardado local (revisá tu conexión)');
+  };
+
+  const cerrarSesion = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } catch {
+      // Si falla la red, igual limpiamos el cache local y vamos al login.
+    }
+    clearUserLocal();
+    onClose();
+    router.replace('/login');
   };
 
   const irA = (href: string) => {
@@ -360,6 +371,15 @@ export default function HamburgerMenu({ abierto, onClose, onPerfilActualizado }:
                 </button>
               </div>
             </section>
+
+            {/* Cerrar sesión */}
+            <button
+              onClick={cerrarSesion}
+              className="flex w-full items-center justify-center gap-2 rounded-btn py-3 text-sm font-semibold"
+              style={{ border: '1px solid var(--color-borde)', color: 'var(--color-error)' }}
+            >
+              <LogOut size={17} /> Cerrar sesión
+            </button>
 
             {/* Footer */}
             <footer className="mt-2 text-center text-xs" style={{ color: 'var(--color-texto-sec)' }}>
