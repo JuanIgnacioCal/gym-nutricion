@@ -1,11 +1,11 @@
 import type { Metadata, Viewport } from 'next';
 import { getGymConfig } from '@/lib/gymConfig';
-import { Inter } from 'next/font/google';
+import { Manrope } from 'next/font/google';
 import RegisterSW from '@/components/RegisterSW';
 import ThemeInit from '@/components/ThemeInit';
 import './globals.css';
 
-const inter = Inter({ subsets: ['latin'] });
+const manrope = Manrope({ subsets: ['latin'] });
 
 const { gym } = getGymConfig();
 
@@ -51,7 +51,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     // Las CSS variables del gym van en <html> (no en <body>): así la clase
     // `.tema-claro` aplicada al <body> puede sobrescribir los colores temáticos.
     <html lang="es" style={cssVars}>
-      <body className={inter.className}>
+      <body className={manrope.className}>
         <ThemeInit />
         {children}
         <RegisterSW />

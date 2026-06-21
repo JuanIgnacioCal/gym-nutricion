@@ -4,16 +4,16 @@
     "tagline": "El gym que nunca duerme",
     "logo": "/logo.png",
     "colores": {
-      "primario": "#F5C200",
+      "primario": "#FFC72C",
       "acento": "#FFFFFF",
-      "fondo": "#0A0A0A",
-      "superficie": "#141414",
-      "superficieAlt": "#1E1E1E",
-      "texto": "#FFFFFF",
-      "textoSecundario": "#A0A0A0",
-      "borde": "#2A2A2A",
+      "fondo": "#060607",
+      "superficie": "#131315",
+      "superficieAlt": "#1A1A1C",
+      "texto": "#F5F5F7",
+      "textoSecundario": "#8E8E93",
+      "borde": "#242426",
       "exito": "#22C55E",
-      "error": "#EF4444"
+      "error": "#FF6B5E"
     }
   },
   "ownerEmail": "calventejuanignacio5@gmail.com"

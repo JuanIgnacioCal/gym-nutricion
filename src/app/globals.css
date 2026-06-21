@@ -3,68 +3,116 @@
 @tailwind utilities;
 
 :root {
-  --color-primario: #FF6B00;
-  --color-acento: #FFD700;
-  --color-fondo: #0D0D0D;
-  --color-superficie: #1A1A1A;
-  --color-superficie-alt: #242424;
-  --color-texto: #FFFFFF;
-  --color-texto-sec: #A0A0A0;
-  --color-borde: #333333;
+  /* --- Marca (white-label): el layout las sobrescribe desde gym.config.json. Estos son fallback. --- */
+  --color-primario: #FFC72C;
+  --color-acento: #FFFFFF;
+  --color-fondo: #060607;
+  --color-superficie: #131315;
+  --color-superficie-alt: #1A1A1C;
+  --color-texto: #F5F5F7;
+  --color-texto-sec: #8E8E93;
+  --color-borde: #242426;
   --color-exito: #22C55E;
-  --color-error: #EF4444;
-  /* Color de texto/íconos sobre fondos primarios (botones).
-     El primario es amarillo → texto negro para contraste legible.
-     El layout puede sobrescribirlo desde gym.config.json (colores.sobrePrimario). */
-  --color-sobre-primario: #0A0A0A;
-  --radio-card: 16px;
-  --radio-btn: 12px;
-  --alto-nav: 72px;
+  --color-error: #FF6B5E;
+  /* Texto/íconos sobre el dorado (botones primarios): casi negro cálido, legible sobre amarillo. */
+  --color-sobre-primario: #1A1500;
+
+  /* --- Sistema de diseño (común a todos los gyms) --- */
+  --color-texto-soft: #C7C7CC;   /* texto secundario suave */
+  --color-texto-3: #636366;      /* placeholder / metadata */
+  --color-superficie-2: #161618; /* superficie un poco más elevada */
+  --color-agua: #5AA9E6;         /* indicador de agua (reservado) */
+
+  /* Dorado: gradiente, sombra y glow derivados del primario → siguen el white-label. */
+  --gradiente-dorado: linear-gradient(180deg, color-mix(in srgb, var(--color-primario) 78%, #ffffff), var(--color-primario));
+  --sombra-dorada: 0 14px 34px -10px color-mix(in srgb, var(--color-primario) 58%, transparent);
+  --glow-dorado: 0 0 24px color-mix(in srgb, var(--color-primario) 38%, transparent);
+
+  /* Radios (del prototipo hi-fi) */
+  --radio-card: 22px;
+  --radio-card-sm: 18px;
+  --radio-btn: 16px;
+  --radio-chip: 13px;
+  --alto-nav: 96px;
 }
 
 body {
-  background-color: var(--color-fondo);
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgba(42, 42, 48, 0.55), transparent 55%),
+    var(--color-fondo);
+  background-attachment: fixed;
   color: var(--color-texto);
-  font-family: 'Inter', sans-serif;
+  font-family: 'Manrope', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  letter-spacing: -0.011em;
   padding-bottom: var(--alto-nav);
   -webkit-tap-highlight-color: transparent;
 }
 
 /* Tema claro */
 .tema-claro {
-  --color-fondo: #F5F5F5;
+  --color-fondo: #F2F2F6;
   --color-superficie: #FFFFFF;
-  --color-superficie-alt: #F0F0F0;
-  --color-texto: #111111;
-  --color-texto-sec: #555555;
-  --color-borde: #E0E0E0;
+  --color-superficie-2: #FFFFFF;
+  --color-superficie-alt: #ECECF1;
+  --color-texto: #1C1C1E;
+  --color-texto-soft: #3A3A3C;
+  --color-texto-sec: #6B6B70;
+  --color-texto-3: #9A9AA0;
+  --color-borde: #E3E3E9;
+}
+.tema-claro body {
+  background: var(--color-fondo);
 }
 
-/* Scrollbar personalizado */
-::-webkit-scrollbar { width: 4px; height: 4px; }
-::-webkit-scrollbar-track { background: var(--color-fondo); }
-::-webkit-scrollbar-thumb { background: var(--color-borde); border-radius: 2px; }
+/* --- Utilidades del sistema --- */
 
-/* Oculta scrollbar en filas horizontales de chips/filtros */
+/* Botón primario dorado (gradiente + sombra). */
+.btn-dorado {
+  background: var(--gradiente-dorado);
+  color: var(--color-sobre-primario);
+  box-shadow: var(--sombra-dorada);
+  border: none;
+}
+.btn-dorado:active {
+  transform: scale(0.97);
+}
+
+/* Superficie "liquid glass" para nav, sheets y overlays. */
+.glass {
+  background: color-mix(in srgb, var(--color-superficie) 68%, transparent);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  border: 1px solid color-mix(in srgb, #ffffff 12%, transparent);
+}
+
+/* Microinteracción por defecto en botones. */
+button {
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-borde); border-radius: 2px; }
 .scrollbar-none { scrollbar-width: none; -ms-overflow-style: none; }
 .scrollbar-none::-webkit-scrollbar { display: none; }
 
-/* Transición de entrada de pantallas y slides */
+/* --- Animaciones --- */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(18px); }
   to { opacity: 1; transform: translateY(0); }
 }
-.animar-entrada { animation: fadeIn 0.3s ease-out; }
+.animar-entrada { animation: fadeIn 0.45s cubic-bezier(0.2, 0.8, 0.2, 1); }
 
 @keyframes slideIn {
   from { opacity: 0; transform: translateX(24px); }
   to { opacity: 1; transform: translateX(0); }
 }
-.animar-slide { animation: slideIn 0.3s ease-out; }
+.animar-slide { animation: slideIn 0.42s cubic-bezier(0.2, 0.85, 0.25, 1); }
 
-/* Toast inferior */
 @keyframes toastUp {
   from { opacity: 0; transform: translate(-50%, 16px); }
   to { opacity: 1; transform: translate(-50%, 0); }
 }
-.animar-toast { animation: toastUp 0.25s ease-out; }
+.animar-toast { animation: toastUp 0.3s ease-out; }
