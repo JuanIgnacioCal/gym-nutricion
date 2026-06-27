@@ -135,31 +135,38 @@ export default function PlanPage() {
     }
   };
 
-  const registrarComido = async (slot: TipoComida, r: Receta) => {
-    if (!perfil || slotsConsumidos.has(slot)) return; // ya registrado: evita duplicar
-    await fetch('/api/registro', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        usuario_id: perfil.id,
-        fecha,
-        tipo_comida: slot,
-        receta_id: r.id,
-        nombre_comida: r.nombre,
-        calorias: r.calorias,
-        proteinas: r.proteinas,
-        carbohidratos: r.carbohidratos,
-        grasas: r.grasas,
-        fibra: r.fibra,
-        gramos: 0,
-      }),
-    });
+  // Marca/desmarca una comida como consumida (toggle). Si ya estaba, la desmarca
+  // borrando su registro del día — así un clic sin querer se puede revertir.
+  const toggleComido = async (slot: TipoComida, r: Receta) => {
+    if (!perfil) return;
+    const yaConsumido = slotsConsumidos.has(slot);
+    if (yaConsumido) {
+      await fetch(`/api/registro?fecha=${fecha}&tipo_comida=${slot}`, { method: 'DELETE' });
+    } else {
+      await fetch('/api/registro', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          usuario_id: perfil.id,
+          fecha,
+          tipo_comida: slot,
+          receta_id: r.id,
+          nombre_comida: r.nombre,
+          calorias: r.calorias,
+          proteinas: r.proteinas,
+          carbohidratos: r.carbohidratos,
+          grasas: r.grasas,
+          fibra: r.fibra,
+          gramos: 0,
+        }),
+      });
+    }
     const regRes = await fetch(`/api/registro?usuario_id=${perfil.id}&fecha=${fecha}`);
     const registros = await regRes.json();
     const regs = Array.isArray(registros) ? registros : [];
     setConsumido(sumarMacros(regs));
     setSlotsConsumidos(new Set(regs.map((rg: { tipo_comida: TipoComida }) => rg.tipo_comida)));
-    mostrar(`✅ ${r.nombre} registrado en ${labelSlot(slot)}`);
+    mostrar(yaConsumido ? `Quitado de ${labelSlot(slot)}` : `✅ ${r.nombre} registrado en ${labelSlot(slot)}`);
   };
 
   if (!perfil) return <Cargando />;
@@ -284,7 +291,7 @@ export default function PlanPage() {
                 consumido={slotsConsumidos.has(s.value)}
                 onFavorito={toggleFavorito}
                 onCambiar={() => cambiarSlot(s.value)}
-                onRegistrar={(r) => registrarComido(s.value, r)}
+                onRegistrar={(r) => toggleComido(s.value, r)}
               />
             ))}
 

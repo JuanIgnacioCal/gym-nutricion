@@ -68,7 +68,11 @@ export async function POST(req: NextRequest) {
   return NextResponse.json(row, { status: 201 });
 }
 
-/** DELETE /api/registro?id= → elimina un registro. */
+/**
+ * DELETE /api/registro → elimina registros del usuario de la sesión.
+ * Acepta ?id= (un registro puntual) o ?fecha=&tipo_comida= (todos los de esa
+ * comida del día, usado para "desmarcar" una comida marcada como consumida).
+ */
 export async function DELETE(req: NextRequest) {
   const sesion = getSesion();
   if (!sesion) return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
@@ -77,14 +81,25 @@ export async function DELETE(req: NextRequest) {
   const db = getDb();
   const { searchParams } = new URL(req.url);
   const id = searchParams.get('id');
-  if (!id) return NextResponse.json({ error: 'Falta id' }, { status: 400 });
+  const fecha = searchParams.get('fecha');
+  const tipo_comida = searchParams.get('tipo_comida');
 
-  // Solo borra si el registro pertenece al usuario de la sesión.
-  const info = db
-    .prepare('DELETE FROM registro_diario WHERE id = ? AND usuario_id = ?')
-    .run(Number(id), usuario_id);
-  if (info.changes === 0) {
+  // Solo borra registros del usuario de la sesión.
+  let cambios = 0;
+  if (id) {
+    cambios = db
+      .prepare('DELETE FROM registro_diario WHERE id = ? AND usuario_id = ?')
+      .run(Number(id), usuario_id).changes;
+  } else if (fecha && tipo_comida) {
+    cambios = db
+      .prepare('DELETE FROM registro_diario WHERE usuario_id = ? AND fecha = ? AND tipo_comida = ?')
+      .run(usuario_id, fecha, tipo_comida).changes;
+  } else {
+    return NextResponse.json({ error: 'Falta id o (fecha y tipo_comida)' }, { status: 400 });
+  }
+
+  if (cambios === 0) {
     return NextResponse.json({ error: 'No encontrado' }, { status: 404 });
   }
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, eliminados: cambios });
 }

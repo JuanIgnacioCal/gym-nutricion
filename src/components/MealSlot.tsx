@@ -84,9 +84,9 @@ export default function MealSlot({
           {onRegistrar &&
             (consumido ? (
               <button
-                disabled
-                className="glass flex h-12 items-center justify-center gap-2 text-[15px] font-extrabold disabled:opacity-100"
-                style={{ borderRadius: 14, color: 'var(--color-texto-sec)', cursor: 'default' }}
+                onClick={() => onRegistrar(receta)}
+                className="glass flex h-12 items-center justify-center gap-2 text-[15px] font-extrabold"
+                style={{ borderRadius: 14, color: 'var(--color-texto-sec)' }}
               >
                 <Check size={17} strokeWidth={3} /> Consumido
               </button>
