@@ -105,6 +105,13 @@ function initSchema(db: Database.Database) {
       FOREIGN KEY (cena_id) REFERENCES recetas(id)
     );
   `);
+
+  // Migración idempotente: columna `pasos` para recetas creadas por el usuario.
+  // (Las recetas predefinidas siguen tomando sus pasos de data/pasos.json.)
+  const cols = db.prepare('PRAGMA table_info(recetas)').all() as { name: string }[];
+  if (!cols.some((c) => c.name === 'pasos')) {
+    db.exec('ALTER TABLE recetas ADD COLUMN pasos TEXT');
+  }
 }
 
 export default getDb;

@@ -68,14 +68,17 @@ export async function POST(req: NextRequest) {
 
   const prep = Number(b.tiempo_preparacion) || 0;
   const ingredientes = Array.isArray(b.ingredientes) ? b.ingredientes.map(String) : [];
+  const pasos = Array.isArray(b.pasos)
+    ? b.pasos.map((s: unknown) => String(s).trim()).filter(Boolean)
+    : [];
 
   const info = db
     .prepare(
       `INSERT INTO recetas
        (nombre, nombre_original, origen, tipo_comida, categoria,
         calorias, proteinas, carbohidratos, grasas, fibra, porciones,
-        tiempo_preparacion, tiempo_coccion, tiempo_total, ingredientes, url_original, calificacion)
-       VALUES (?, ?, 'usuario', ?, 'personalizada', ?, ?, ?, ?, ?, 1, ?, 0, ?, ?, '', 0)`
+        tiempo_preparacion, tiempo_coccion, tiempo_total, ingredientes, url_original, calificacion, pasos)
+       VALUES (?, ?, 'usuario', ?, 'personalizada', ?, ?, ?, ?, ?, 1, ?, 0, ?, ?, '', 0, ?)`
     )
     .run(
       b.nombre.trim(),
@@ -88,9 +91,74 @@ export async function POST(req: NextRequest) {
       Number(b.fibra) || 0,
       prep,
       prep,
-      JSON.stringify(ingredientes)
+      JSON.stringify(ingredientes),
+      JSON.stringify(pasos)
     );
 
   const row = db.prepare('SELECT * FROM recetas WHERE id = ?').get(info.lastInsertRowid) as RecetaRow;
   return NextResponse.json(rowToReceta(row), { status: 201 });
+}
+
+/**
+ * PUT /api/recetas → edita una receta propia del usuario (origen 'usuario').
+ * Permite editar nombre, tipo, tiempo, macros, ingredientes y pasos.
+ * Las recetas predefinidas no se pueden editar (403).
+ */
+export async function PUT(req: NextRequest) {
+  const sesion = getSesion();
+  if (!sesion) return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
+
+  const db = getDb();
+  const b = await req.json();
+  const id = Number(b?.id);
+  if (!id) return NextResponse.json({ error: 'Falta el id de la receta' }, { status: 400 });
+
+  const row = db.prepare('SELECT * FROM recetas WHERE id = ?').get(id) as RecetaRow | undefined;
+  if (!row) return NextResponse.json({ error: 'Receta no encontrada' }, { status: 404 });
+  if (row.origen !== 'usuario') {
+    return NextResponse.json({ error: 'Solo podés editar tus propias recetas' }, { status: 403 });
+  }
+
+  const nombre = typeof b.nombre === 'string' && b.nombre.trim() ? b.nombre.trim() : row.nombre;
+  const slot = String(b.tipo_comida ?? '');
+  const tipo_comida =
+    slot === 'desayuno' || slot === 'merienda'
+      ? 'desayuno/merienda'
+      : slot === 'almuerzo' || slot === 'cena'
+        ? 'almuerzo/cena'
+        : row.tipo_comida;
+  const ingredientes = Array.isArray(b.ingredientes)
+    ? b.ingredientes.map(String)
+    : JSON.parse(row.ingredientes || '[]');
+  const pasos = Array.isArray(b.pasos)
+    ? b.pasos.map((s: unknown) => String(s).trim()).filter(Boolean)
+    : row.pasos
+      ? JSON.parse(row.pasos)
+      : [];
+  const num = (v: unknown, fallback: number) => (v == null || v === '' ? fallback : Number(v) || 0);
+  const prep = num(b.tiempo_preparacion, row.tiempo_preparacion);
+
+  db.prepare(
+    `UPDATE recetas SET nombre = ?, nombre_original = ?, tipo_comida = ?,
+       calorias = ?, proteinas = ?, carbohidratos = ?, grasas = ?, fibra = ?,
+       tiempo_preparacion = ?, tiempo_total = ?, ingredientes = ?, pasos = ?
+     WHERE id = ?`
+  ).run(
+    nombre,
+    nombre,
+    tipo_comida,
+    Math.round(num(b.calorias, row.calorias)),
+    num(b.proteinas, row.proteinas),
+    num(b.carbohidratos, row.carbohidratos),
+    num(b.grasas, row.grasas),
+    num(b.fibra, row.fibra),
+    prep,
+    prep,
+    JSON.stringify(ingredientes),
+    JSON.stringify(pasos),
+    id
+  );
+
+  const updated = db.prepare('SELECT * FROM recetas WHERE id = ?').get(id) as RecetaRow;
+  return NextResponse.json(rowToReceta(updated));
 }

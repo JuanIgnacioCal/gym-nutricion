@@ -17,6 +17,8 @@ interface IngredienteReceta {
 interface AgregarRecetaModalProps {
   onClose: () => void;
   onGuardada: (r: Receta) => void;
+  /** Si viene, el modal trabaja en modo edición de una receta propia del usuario. */
+  recetaEditar?: Receta | null;
 }
 
 const TIPOS: { value: TipoComida; label: string }[] = [
@@ -26,11 +28,19 @@ const TIPOS: { value: TipoComida; label: string }[] = [
   { value: 'cena', label: 'Cena' },
 ];
 
-export default function AgregarRecetaModal({ onClose, onGuardada }: AgregarRecetaModalProps) {
-  const [nombre, setNombre] = useState('');
-  const [tipo, setTipo] = useState<TipoComida>('almuerzo');
-  const [prep, setPrep] = useState(15);
+/** El tipo_comida guardado es combinado ('desayuno/merienda'); recuperamos un slot razonable. */
+function tipoDesde(tc?: string): TipoComida {
+  return tc && tc.includes('desayuno') ? 'desayuno' : 'almuerzo';
+}
+
+export default function AgregarRecetaModal({ onClose, onGuardada, recetaEditar }: AgregarRecetaModalProps) {
+  const esEdicion = !!recetaEditar;
+
+  const [nombre, setNombre] = useState(recetaEditar?.nombre ?? '');
+  const [tipo, setTipo] = useState<TipoComida>(tipoDesde(recetaEditar?.tipo_comida));
+  const [prep, setPrep] = useState(recetaEditar?.tiempo_preparacion ?? 15);
   const [ingredientes, setIngredientes] = useState<IngredienteReceta[]>([]);
+  const [pasos, setPasos] = useState<string[]>(recetaEditar?.pasos ?? []);
 
   const [query, setQuery] = useState('');
   const [resultados, setResultados] = useState<AlimentoBusqueda[]>([]);
@@ -40,6 +50,16 @@ export default function AgregarRecetaModal({ onClose, onGuardada }: AgregarRecet
 
   const total = sumarMacros(ingredientes);
   const fibraTotal = ingredientes.reduce((s, i) => s + i.fibra, 0);
+  // En edición mostramos los macros ya guardados (no recalculamos los ingredientes existentes).
+  const macros =
+    esEdicion && recetaEditar
+      ? {
+          calorias: recetaEditar.calorias,
+          proteinas: recetaEditar.proteinas,
+          carbohidratos: recetaEditar.carbohidratos,
+          grasas: recetaEditar.grasas,
+        }
+      : total;
 
   const buscar = async () => {
     if (!query.trim()) return;
@@ -60,29 +80,60 @@ export default function AgregarRecetaModal({ onClose, onGuardada }: AgregarRecet
   const quitarIngrediente = (i: number) =>
     setIngredientes((prev) => prev.filter((_, idx) => idx !== i));
 
+  const agregarPaso = () => setPasos((p) => [...p, '']);
+  const cambiarPaso = (i: number, v: string) =>
+    setPasos((p) => p.map((x, idx) => (idx === i ? v : x)));
+  const quitarPaso = (i: number) => setPasos((p) => p.filter((_, idx) => idx !== i));
+
   const guardar = async () => {
     setError('');
     if (!nombre.trim()) return setError('Poné un nombre a la receta.');
-    if (ingredientes.length === 0) return setError('Agregá al menos un ingrediente.');
+    if (!esEdicion && ingredientes.length === 0) return setError('Agregá al menos un ingrediente.');
     setGuardando(true);
+    const pasosLimpios = pasos.map((s) => s.trim()).filter(Boolean);
     try {
-      const res = await fetch('/api/recetas', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          nombre,
-          tipo_comida: tipo,
-          tiempo_preparacion: prep,
-          calorias: total.calorias,
-          proteinas: total.proteinas,
-          carbohidratos: total.carbohidratos,
-          grasas: total.grasas,
-          fibra: fibraTotal,
-          ingredientes: ingredientes.map((i) => i.nombre),
-        }),
-      });
-      if (!res.ok) throw new Error('No se pudo guardar');
-      const receta: Receta = await res.json();
+      let receta: Receta;
+      if (esEdicion && recetaEditar) {
+        // Editar: conservamos ingredientes y macros existentes; cambian nombre, tipo, prep y pasos.
+        const res = await fetch('/api/recetas', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: recetaEditar.id,
+            nombre,
+            tipo_comida: tipo,
+            tiempo_preparacion: prep,
+            calorias: recetaEditar.calorias,
+            proteinas: recetaEditar.proteinas,
+            carbohidratos: recetaEditar.carbohidratos,
+            grasas: recetaEditar.grasas,
+            fibra: recetaEditar.fibra,
+            ingredientes: recetaEditar.ingredientes,
+            pasos: pasosLimpios,
+          }),
+        });
+        if (!res.ok) throw new Error('No se pudo guardar');
+        receta = await res.json();
+      } else {
+        const res = await fetch('/api/recetas', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            nombre,
+            tipo_comida: tipo,
+            tiempo_preparacion: prep,
+            calorias: total.calorias,
+            proteinas: total.proteinas,
+            carbohidratos: total.carbohidratos,
+            grasas: total.grasas,
+            fibra: fibraTotal,
+            ingredientes: ingredientes.map((i) => i.nombre),
+            pasos: pasosLimpios,
+          }),
+        });
+        if (!res.ok) throw new Error('No se pudo guardar');
+        receta = await res.json();
+      }
       onGuardada(receta);
     } catch {
       setError('Hubo un problema al guardar. Probá de nuevo.');
@@ -98,9 +149,11 @@ export default function AgregarRecetaModal({ onClose, onGuardada }: AgregarRecet
         style={{ background: 'var(--color-superficie)', border: '1px solid var(--color-borde)' }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="sticky top-0 z-10 flex items-center justify-between p-4"
-          style={{ background: 'var(--color-superficie)', borderBottom: '1px solid var(--color-borde)' }}>
-          <h2 className="text-lg font-bold">Agregar mi receta</h2>
+        <div
+          className="sticky top-0 z-10 flex items-center justify-between p-4"
+          style={{ background: 'var(--color-superficie)', borderBottom: '1px solid var(--color-borde)' }}
+        >
+          <h2 className="text-lg font-bold">{esEdicion ? 'Editar receta' : 'Agregar mi receta'}</h2>
           <button onClick={onClose} aria-label="Cerrar"><X size={22} /></button>
         </div>
 
@@ -117,52 +170,51 @@ export default function AgregarRecetaModal({ onClose, onGuardada }: AgregarRecet
             />
           </label>
 
-          {/* Buscar ingrediente */}
-          <div>
-            <span className="text-sm" style={{ color: 'var(--color-texto-sec)' }}>Agregar ingredientes</span>
-            <div className="mt-1 flex gap-2">
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && buscar()}
-                placeholder="Ej: arroz, pollo, banana..."
-                className="w-full rounded-btn px-3 py-2.5 outline-none"
-                style={{ background: 'var(--color-superficie-alt)', border: '1px solid var(--color-borde)', color: 'var(--color-texto)' }}
-              />
-              <button
-                onClick={buscar}
-                className="shrink-0 inline-flex items-center justify-center rounded-btn px-4"
-                style={{ background: 'var(--color-primario)', color: 'var(--color-sobre-primario)' }}
-              >
-                <Search size={18} />
-              </button>
+          {/* Buscar ingrediente (solo al crear) */}
+          {!esEdicion && (
+            <div>
+              <span className="text-sm" style={{ color: 'var(--color-texto-sec)' }}>Agregar ingredientes</span>
+              <div className="mt-1 flex gap-2">
+                <input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && buscar()}
+                  placeholder="Ej: arroz, pollo, banana..."
+                  className="w-full rounded-btn px-3 py-2.5 outline-none"
+                  style={{ background: 'var(--color-superficie-alt)', border: '1px solid var(--color-borde)', color: 'var(--color-texto)' }}
+                />
+                <button
+                  onClick={buscar}
+                  className="shrink-0 inline-flex items-center justify-center rounded-btn px-4"
+                  style={{ background: 'var(--color-primario)', color: 'var(--color-sobre-primario)' }}
+                >
+                  <Search size={18} />
+                </button>
+              </div>
+
+              {buscando && (
+                <div className="py-4 flex justify-center">
+                  <div className="w-6 h-6 border-2 rounded-full animate-spin" style={{ borderColor: 'var(--color-primario)', borderTopColor: 'transparent' }} />
+                </div>
+              )}
+              {!buscando && resultados.length > 0 && (
+                <div className="mt-2 flex flex-col gap-2">
+                  {resultados.map((a) => (
+                    <ResultadoIngrediente key={a.id} alimento={a} onAgregar={agregarIngrediente} />
+                  ))}
+                </div>
+              )}
             </div>
+          )}
 
-            {buscando && (
-              <div className="py-4 flex justify-center">
-                <div className="w-6 h-6 border-2 rounded-full animate-spin" style={{ borderColor: 'var(--color-primario)', borderTopColor: 'transparent' }} />
-              </div>
-            )}
-            {!buscando && resultados.length > 0 && (
-              <div className="mt-2 flex flex-col gap-2">
-                {resultados.map((a) => (
-                  <ResultadoIngrediente key={a.id} alimento={a} onAgregar={agregarIngrediente} />
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Lista de ingredientes agregados */}
-          {ingredientes.length > 0 && (
+          {/* Lista de ingredientes agregados (al crear) */}
+          {!esEdicion && ingredientes.length > 0 && (
             <div className="flex flex-col gap-1.5">
               <span className="text-sm font-semibold">Ingredientes ({ingredientes.length})</span>
               {ingredientes.map((ing, i) => (
-                <div key={i} className="flex items-center justify-between gap-2 rounded-btn px-3 py-2"
-                  style={{ background: 'var(--color-superficie-alt)' }}>
+                <div key={i} className="flex items-center justify-between gap-2 rounded-btn px-3 py-2" style={{ background: 'var(--color-superficie-alt)' }}>
                   <span className="text-sm min-w-0 truncate">{ing.nombre}</span>
-                  <span className="text-xs shrink-0" style={{ color: 'var(--color-texto-sec)' }}>
-                    {ing.calorias} kcal
-                  </span>
+                  <span className="text-xs shrink-0" style={{ color: 'var(--color-texto-sec)' }}>{ing.calorias} kcal</span>
                   <button onClick={() => quitarIngrediente(i)} aria-label="Quitar" className="shrink-0">
                     <Trash2 size={15} style={{ color: 'var(--color-error)' }} />
                   </button>
@@ -171,20 +223,69 @@ export default function AgregarRecetaModal({ onClose, onGuardada }: AgregarRecet
             </div>
           )}
 
-          {/* Suma de macros en vivo */}
-          <div className="grid grid-cols-4 gap-2 text-center rounded-card p-3"
-            style={{ background: 'var(--color-superficie-alt)' }}>
+          {/* Ingredientes existentes (al editar, solo lectura) */}
+          {esEdicion && recetaEditar && recetaEditar.ingredientes.length > 0 && (
+            <div className="flex flex-col gap-1.5">
+              <span className="text-sm font-semibold">Ingredientes</span>
+              {recetaEditar.ingredientes.map((ing, i) => (
+                <div key={i} className="rounded-btn px-3 py-2 text-sm" style={{ background: 'var(--color-superficie-alt)', color: 'var(--color-texto-sec)' }}>
+                  {ing}
+                </div>
+              ))}
+              <span className="text-[11px]" style={{ color: 'var(--color-texto-sec)' }}>
+                Los ingredientes no se editan en esta pantalla.
+              </span>
+            </div>
+          )}
+
+          {/* Suma de macros */}
+          <div className="grid grid-cols-4 gap-2 text-center rounded-card p-3" style={{ background: 'var(--color-superficie-alt)' }}>
             {[
-              { l: 'kcal', v: total.calorias },
-              { l: 'prot', v: `${Math.round(total.proteinas)}g` },
-              { l: 'carbs', v: `${Math.round(total.carbohidratos)}g` },
-              { l: 'grasas', v: `${Math.round(total.grasas)}g` },
+              { l: 'kcal', v: macros.calorias },
+              { l: 'prot', v: `${Math.round(macros.proteinas)}g` },
+              { l: 'carbs', v: `${Math.round(macros.carbohidratos)}g` },
+              { l: 'grasas', v: `${Math.round(macros.grasas)}g` },
             ].map((m) => (
               <div key={m.l}>
                 <div className="font-bold" style={{ color: 'var(--color-acento)' }}>{m.v}</div>
                 <div className="text-[10px]" style={{ color: 'var(--color-texto-sec)' }}>{m.l}</div>
               </div>
             ))}
+          </div>
+
+          {/* Preparación (pasos) */}
+          <div>
+            <span className="text-sm" style={{ color: 'var(--color-texto-sec)' }}>Preparación (pasos)</span>
+            <div className="mt-1 flex flex-col gap-2">
+              {pasos.map((paso, i) => (
+                <div key={i} className="flex items-start gap-2">
+                  <span
+                    className="mt-2 shrink-0 inline-flex items-center justify-center rounded-full text-xs font-bold"
+                    style={{ width: 20, height: 20, background: 'var(--color-primario)', color: 'var(--color-sobre-primario)' }}
+                  >
+                    {i + 1}
+                  </span>
+                  <textarea
+                    value={paso}
+                    onChange={(e) => cambiarPaso(i, e.target.value)}
+                    rows={2}
+                    placeholder={`Paso ${i + 1}…`}
+                    className="w-full rounded-btn px-3 py-2 text-sm outline-none resize-none"
+                    style={{ background: 'var(--color-superficie-alt)', border: '1px solid var(--color-borde)', color: 'var(--color-texto)' }}
+                  />
+                  <button onClick={() => quitarPaso(i)} aria-label="Quitar paso" className="mt-2 shrink-0">
+                    <Trash2 size={15} style={{ color: 'var(--color-error)' }} />
+                  </button>
+                </div>
+              ))}
+              <button
+                onClick={agregarPaso}
+                className="self-start inline-flex items-center gap-1.5 rounded-btn px-3 py-2 text-sm font-medium"
+                style={{ border: '1px solid var(--color-primario)', color: 'var(--color-primario)' }}
+              >
+                <Plus size={15} /> Agregar paso
+              </button>
+            </div>
           </div>
 
           {/* Tiempo + tipo */}
@@ -220,7 +321,7 @@ export default function AgregarRecetaModal({ onClose, onGuardada }: AgregarRecet
             className="rounded-btn py-3 text-base font-semibold disabled:opacity-60"
             style={{ background: 'var(--color-primario)', color: 'var(--color-sobre-primario)' }}
           >
-            {guardando ? 'Guardando...' : 'Guardar receta'}
+            {guardando ? 'Guardando...' : esEdicion ? 'Guardar cambios' : 'Guardar receta'}
           </button>
         </div>
       </div>
@@ -238,8 +339,7 @@ function ResultadoIngrediente({
   const [gramos, setGramos] = useState(100);
   const c = escalarPorGramos(alimento, gramos || 0);
   return (
-    <div className="flex items-center gap-2 rounded-btn px-3 py-2"
-      style={{ background: 'var(--color-superficie-alt)', border: '1px solid var(--color-borde)' }}>
+    <div className="flex items-center gap-2 rounded-btn px-3 py-2" style={{ background: 'var(--color-superficie-alt)', border: '1px solid var(--color-borde)' }}>
       <div className="min-w-0 flex-1">
         <p className="text-sm truncate">{alimento.nombre}</p>
         <p className="text-[11px]" style={{ color: 'var(--color-texto-sec)' }}>

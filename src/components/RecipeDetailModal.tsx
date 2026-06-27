@@ -1,8 +1,9 @@
 'use client';
-import { useEffect } from 'react';
-import { X, Heart, Clock, ExternalLink } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { X, Heart, Clock, ExternalLink, Pencil } from 'lucide-react';
 import type { Receta } from '@/types';
 import { esLocal, escalarIngrediente } from '@/lib/util';
+import AgregarRecetaModal from './AgregarRecetaModal';
 
 interface RecipeDetailModalProps {
   receta: Receta | null;
@@ -17,6 +18,8 @@ export default function RecipeDetailModal({
   onClose,
   onToggleFavorito,
 }: RecipeDetailModalProps) {
+  const [editando, setEditando] = useState(false);
+
   // Cerrar con Escape y bloquear scroll de fondo mientras está abierto.
   useEffect(() => {
     if (!receta) return;
@@ -173,31 +176,53 @@ export default function RecipeDetailModal({
           </div>
 
           {/* Acciones */}
-          <div className="flex gap-2 pt-1">
-            {onToggleFavorito && (
+          <div className="flex flex-col gap-2 pt-1">
+            {receta.origen === 'usuario' && (
               <button
-                onClick={() => onToggleFavorito(receta)}
-                className="flex-1 inline-flex items-center justify-center gap-2 rounded-btn py-2.5 text-sm font-semibold"
-                style={{ border: '1px solid var(--color-primario)', color: 'var(--color-texto)' }}
+                onClick={() => setEditando(true)}
+                className="inline-flex items-center justify-center gap-2 rounded-btn py-2.5 text-sm font-semibold"
+                style={{ background: 'var(--color-primario)', color: 'var(--color-sobre-primario)' }}
               >
-                <Heart
-                  size={16}
-                  fill={favorito ? 'var(--color-primario)' : 'none'}
-                  stroke="var(--color-primario)"
-                />
-                {favorito ? 'En favoritos' : 'Guardar en favoritos'}
+                <Pencil size={16} /> Editar receta
               </button>
             )}
-            <button
-              onClick={onClose}
-              className="rounded-btn px-5 py-2.5 text-sm"
-              style={{ border: '1px solid var(--color-borde)', color: 'var(--color-texto-sec)' }}
-            >
-              Cerrar
-            </button>
+            <div className="flex gap-2">
+              {onToggleFavorito && (
+                <button
+                  onClick={() => onToggleFavorito(receta)}
+                  className="flex-1 inline-flex items-center justify-center gap-2 rounded-btn py-2.5 text-sm font-semibold"
+                  style={{ border: '1px solid var(--color-primario)', color: 'var(--color-texto)' }}
+                >
+                  <Heart
+                    size={16}
+                    fill={favorito ? 'var(--color-primario)' : 'none'}
+                    stroke="var(--color-primario)"
+                  />
+                  {favorito ? 'En favoritos' : 'Guardar en favoritos'}
+                </button>
+              )}
+              <button
+                onClick={onClose}
+                className="rounded-btn px-5 py-2.5 text-sm"
+                style={{ border: '1px solid var(--color-borde)', color: 'var(--color-texto-sec)' }}
+              >
+                Cerrar
+              </button>
+            </div>
           </div>
         </div>
       </div>
+
+      {editando && (
+        <AgregarRecetaModal
+          recetaEditar={receta}
+          onClose={() => setEditando(false)}
+          onGuardada={() => {
+            setEditando(false);
+            onClose();
+          }}
+        />
+      )}
     </div>
   );
 }

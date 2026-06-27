@@ -193,5 +193,14 @@ export function escalarIngrediente(texto: string, factor: number): string {
   const unidad = unidadMatch ? unidadMatch[1].toLowerCase() : '';
   if (UNIDADES_NO_ESCALABLES.has(unidad)) return texto;
   const escalado = redondearCantidad(valor * factor, bucketDeUnidad(unidad));
-  return `${pre}${renderCantidad(escalado)}${sep}${resto}`;
+  // También escala un gramaje de referencia entre paréntesis, ej. "1 taza (100g) queso".
+  const restoEscalado = resto.replace(
+    /\((\d+(?:[.,]\d+)?)(\s*)(g|gr|grs|gramos?|ml|cc)\)/gi,
+    (full: string, num: string, sp: string, u: string) => {
+      const v = parseCantidad(num);
+      if (v === null || v <= 0) return full;
+      return `(${renderCantidad(redondearCantidad(v * factor, 'metrica_entera'))}${sp}${u})`;
+    },
+  );
+  return `${pre}${renderCantidad(escalado)}${sep}${restoEscalado}`;
 }

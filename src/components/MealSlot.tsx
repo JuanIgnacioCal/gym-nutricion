@@ -14,6 +14,7 @@ interface MealSlotProps {
   onFavorito?: (r: Receta) => void;
   onCambiar?: () => void;
   onRegistrar?: (r: Receta) => void;
+  consumido?: boolean;
 }
 
 export default function MealSlot({
@@ -25,6 +26,7 @@ export default function MealSlot({
   onFavorito,
   onCambiar,
   onRegistrar,
+  consumido = false,
 }: MealSlotProps) {
   const [detalle, setDetalle] = useState(false);
   return (
@@ -79,15 +81,24 @@ export default function MealSlot({
             <Clock size={13} /> {receta.tiempo_total || receta.tiempo_preparacion || 0} min
           </div>
 
-          {onRegistrar && (
-            <button
-              onClick={() => onRegistrar(receta)}
-              className="btn-dorado flex h-12 items-center justify-center gap-2 text-[15px] font-extrabold"
-              style={{ borderRadius: 14 }}
-            >
-              <Check size={17} strokeWidth={3} /> Comí esto
-            </button>
-          )}
+          {onRegistrar &&
+            (consumido ? (
+              <button
+                disabled
+                className="glass flex h-12 items-center justify-center gap-2 text-[15px] font-extrabold disabled:opacity-100"
+                style={{ borderRadius: 14, color: 'var(--color-texto-sec)', cursor: 'default' }}
+              >
+                <Check size={17} strokeWidth={3} /> Consumido
+              </button>
+            ) : (
+              <button
+                onClick={() => onRegistrar(receta)}
+                className="btn-dorado flex h-12 items-center justify-center gap-2 text-[15px] font-extrabold"
+                style={{ borderRadius: 14 }}
+              >
+                <Check size={17} strokeWidth={3} /> Comí esto
+              </button>
+            ))}
 
           <div className="flex gap-2.5">
             {onFavorito && (

@@ -25,6 +25,7 @@ export default function PlanPage() {
   const [perfil, setPerfil] = useState<UserProfile | null>(null);
   const [plan, setPlan] = useState<PlanDiario | null>(null);
   const [consumido, setConsumido] = useState<MacroTotales>(macrosVacios());
+  const [slotsConsumidos, setSlotsConsumidos] = useState<Set<TipoComida>>(() => new Set<TipoComida>());
   const [favMap, setFavMap] = useState<Record<number, number>>({});
   const [cargando, setCargando] = useState(true);
   const [generando, setGenerando] = useState(false);
@@ -43,7 +44,9 @@ export default function PlanPage() {
       ]);
       setPlan(await planRes.json());
       const registros = await regRes.json();
-      setConsumido(sumarMacros(Array.isArray(registros) ? registros : []));
+      const regs = Array.isArray(registros) ? registros : [];
+      setConsumido(sumarMacros(regs));
+      setSlotsConsumidos(new Set(regs.map((r: { tipo_comida: TipoComida }) => r.tipo_comida)));
       const favs = await favRes.json();
       const map: Record<number, number> = {};
       if (Array.isArray(favs)) {
@@ -133,7 +136,7 @@ export default function PlanPage() {
   };
 
   const registrarComido = async (slot: TipoComida, r: Receta) => {
-    if (!perfil) return;
+    if (!perfil || slotsConsumidos.has(slot)) return; // ya registrado: evita duplicar
     await fetch('/api/registro', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -153,7 +156,9 @@ export default function PlanPage() {
     });
     const regRes = await fetch(`/api/registro?usuario_id=${perfil.id}&fecha=${fecha}`);
     const registros = await regRes.json();
-    setConsumido(sumarMacros(Array.isArray(registros) ? registros : []));
+    const regs = Array.isArray(registros) ? registros : [];
+    setConsumido(sumarMacros(regs));
+    setSlotsConsumidos(new Set(regs.map((rg: { tipo_comida: TipoComida }) => rg.tipo_comida)));
     mostrar(`✅ ${r.nombre} registrado en ${labelSlot(slot)}`);
   };
 
@@ -161,11 +166,9 @@ export default function PlanPage() {
 
   const slots = slotsDe(perfil.objetivo.comidas);
   const hayPlan = plan && slots.some((s) => plan[s.value]);
-  const totalesPlan = hayPlan
-    ? sumarMacros(slots.map((s) => plan![s.value]).filter(Boolean) as Receta[])
-    : macrosVacios();
   const obj = perfil.objetivo;
-  const faltanKcal = Math.max(0, obj.calorias - totalesPlan.calorias);
+  const faltanKcal = Math.max(0, obj.calorias - consumido.calorias);
+  const pctKcal = obj.calorias > 0 ? Math.round((consumido.calorias / obj.calorias) * 100) : 0;
 
   const chips = [
     { label: 'kcal', dot: 'var(--color-primario)', val: Math.round(consumido.calorias), obj: obj.calorias },
@@ -194,6 +197,25 @@ export default function PlanPage() {
           >
             <Menu size={20} />
           </button>
+        </div>
+
+        {/* Barra de progreso del día (calorías consumidas vs objetivo), estilo liquid glass */}
+        <div className="glass mt-4 flex items-center gap-3" style={{ borderRadius: 14, padding: '10px 14px' }}>
+          <span className="text-[12px] font-extrabold" style={{ color: 'var(--color-texto-soft)' }}>
+            Hoy
+          </span>
+          <div
+            className="h-[8px] flex-1 overflow-hidden rounded-full"
+            style={{ background: 'color-mix(in srgb, var(--color-texto) 12%, transparent)' }}
+          >
+            <div
+              className="h-full rounded-full transition-all duration-700"
+              style={{ width: `${Math.min(pctKcal, 100)}%`, background: 'var(--gradiente-dorado)' }}
+            />
+          </div>
+          <span className="text-[12px] font-extrabold tabular-nums" style={{ color: 'var(--color-primario)' }}>
+            {pctKcal}%
+          </span>
         </div>
 
         <div className="mt-4 flex gap-2">
@@ -259,6 +281,7 @@ export default function PlanPage() {
                 receta={plan![s.value]}
                 favorito={!!(plan![s.value] && favMap[plan![s.value]!.id])}
                 cargandoCambio={cambiando === s.value}
+                consumido={slotsConsumidos.has(s.value)}
                 onFavorito={toggleFavorito}
                 onCambiar={() => cambiarSlot(s.value)}
                 onRegistrar={(r) => registrarComido(s.value, r)}
@@ -267,18 +290,20 @@ export default function PlanPage() {
 
             <section style={{ borderRadius: 22, padding: 18, background: 'var(--color-superficie)', border: '1px solid var(--color-borde)' }}>
               <h3 className="mb-3.5 text-[17px] font-extrabold" style={{ letterSpacing: '-0.4px' }}>
-                Totales del plan
+                Consumido hoy
               </h3>
               <div className="flex flex-col gap-3">
-                <MacroBar label="Calorías" consumido={totalesPlan.calorias} objetivo={obj.calorias} unidad=" kcal" />
-                <MacroBar label="Proteínas" consumido={totalesPlan.proteinas} objetivo={obj.proteinas} />
-                <MacroBar label="Carbohidratos" consumido={totalesPlan.carbohidratos} objetivo={obj.carbohidratos} />
-                <MacroBar label="Grasas" consumido={totalesPlan.grasas} objetivo={obj.grasas} />
+                <MacroBar label="Calorías" consumido={consumido.calorias} objetivo={obj.calorias} unidad=" kcal" />
+                <MacroBar label="Proteínas" consumido={consumido.proteinas} objetivo={obj.proteinas} />
+                <MacroBar label="Carbohidratos" consumido={consumido.carbohidratos} objetivo={obj.carbohidratos} />
+                <MacroBar label="Grasas" consumido={consumido.grasas} objetivo={obj.grasas} />
               </div>
               <p className="mt-3 text-[13px] font-medium" style={{ color: 'var(--color-texto-sec)' }}>
-                {faltanKcal > 0
-                  ? `Te faltan ${faltanKcal} kcal para tu objetivo.`
-                  : 'Tu plan cubre tu objetivo de calorías 💪'}
+                {consumido.calorias === 0
+                  ? 'Marcá "Comí esto" en cada comida para ir sumando tu progreso del día.'
+                  : faltanKcal > 0
+                    ? `Te faltan ${faltanKcal} kcal para tu objetivo.`
+                    : '¡Alcanzaste tu objetivo de calorías! 💪'}
               </p>
               <button
                 onClick={generarPlan}
