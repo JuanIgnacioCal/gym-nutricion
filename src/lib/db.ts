@@ -112,6 +112,10 @@ function initSchema(db: Database.Database) {
   if (!cols.some((c) => c.name === 'pasos')) {
     db.exec('ALTER TABLE recetas ADD COLUMN pasos TEXT');
   }
+  // Dueño de las recetas creadas por el usuario (cada uno ve/edita solo las suyas).
+  if (!cols.some((c) => c.name === 'usuario_id')) {
+    db.exec('ALTER TABLE recetas ADD COLUMN usuario_id TEXT');
+  }
 }
 
 export default getDb;

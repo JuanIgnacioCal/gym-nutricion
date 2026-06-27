@@ -27,7 +27,7 @@ function elegirAlAzar<T>(arr: T[]): T {
 
 function candidatasTipo(db: Database.Database, slot: TipoComida, excluir: number[]): RecetaRow[] {
   const filas = db
-    .prepare(`SELECT * FROM recetas WHERE tipo_comida LIKE ? ORDER BY id`)
+    .prepare(`SELECT * FROM recetas WHERE tipo_comida LIKE ? AND origen != 'usuario' ORDER BY id`)
     .all(`%${tagPara(slot)}%`) as RecetaRow[];
   return filas.filter((r) => !excluir.includes(r.id));
 }
@@ -63,7 +63,9 @@ export function seleccionarReceta(
 ): Receta | null {
   let cands = candidatasTipo(db, slot, excluir);
   if (cands.length === 0) {
-    const todas = db.prepare(`SELECT * FROM recetas ORDER BY id`).all() as RecetaRow[];
+    const todas = db
+      .prepare(`SELECT * FROM recetas WHERE origen != 'usuario' ORDER BY id`)
+      .all() as RecetaRow[];
     cands = todas.filter((r) => !excluir.includes(r.id));
   }
   if (cands.length === 0) return null;

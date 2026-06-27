@@ -10,6 +10,7 @@ export const dynamic = 'force-dynamic';
  * Lista recetas con filtros opcionales.
  */
 export async function GET(req: NextRequest) {
+  const sesion = getSesion();
   const db = getDb();
   const { searchParams } = new URL(req.url);
   const categoria = searchParams.get('categoria');
@@ -19,6 +20,16 @@ export async function GET(req: NextRequest) {
 
   const where: string[] = [];
   const params: (string | number)[] = [];
+
+  // Privacidad: cada usuario ve las recetas predefinidas + SOLO sus propias recetas.
+  if (sesion) {
+    // Predefinidas + las propias + las "huérfanas" sin dueño (creadas antes de este
+    // campo; se le asigna dueño al editarlas).
+    where.push("(origen != 'usuario' OR usuario_id = ? OR usuario_id IS NULL)");
+    params.push(sesion.sub);
+  } else {
+    where.push("origen != 'usuario'");
+  }
 
   if (categoria && categoria !== 'todas') {
     where.push('categoria LIKE ?');
@@ -77,8 +88,8 @@ export async function POST(req: NextRequest) {
       `INSERT INTO recetas
        (nombre, nombre_original, origen, tipo_comida, categoria,
         calorias, proteinas, carbohidratos, grasas, fibra, porciones,
-        tiempo_preparacion, tiempo_coccion, tiempo_total, ingredientes, url_original, calificacion, pasos)
-       VALUES (?, ?, 'usuario', ?, 'personalizada', ?, ?, ?, ?, ?, 1, ?, 0, ?, ?, '', 0, ?)`
+        tiempo_preparacion, tiempo_coccion, tiempo_total, ingredientes, url_original, calificacion, pasos, usuario_id)
+       VALUES (?, ?, 'usuario', ?, 'personalizada', ?, ?, ?, ?, ?, 1, ?, 0, ?, ?, '', 0, ?, ?)`
     )
     .run(
       b.nombre.trim(),
@@ -92,7 +103,8 @@ export async function POST(req: NextRequest) {
       prep,
       prep,
       JSON.stringify(ingredientes),
-      JSON.stringify(pasos)
+      JSON.stringify(pasos),
+      sesion.sub
     );
 
   const row = db.prepare('SELECT * FROM recetas WHERE id = ?').get(info.lastInsertRowid) as RecetaRow;
@@ -113,9 +125,13 @@ export async function PUT(req: NextRequest) {
   const id = Number(b?.id);
   if (!id) return NextResponse.json({ error: 'Falta el id de la receta' }, { status: 400 });
 
-  const row = db.prepare('SELECT * FROM recetas WHERE id = ?').get(id) as RecetaRow | undefined;
+  const row = db.prepare('SELECT * FROM recetas WHERE id = ?').get(id) as
+    | (RecetaRow & { usuario_id: string | null })
+    | undefined;
   if (!row) return NextResponse.json({ error: 'Receta no encontrada' }, { status: 404 });
-  if (row.origen !== 'usuario') {
+  // Solo el dueño puede editar su receta. Las "huérfanas" (sin dueño, de antes de este
+  // campo) se pueden editar y quedan asignadas a quien las edita.
+  if (row.origen !== 'usuario' || (row.usuario_id !== null && row.usuario_id !== sesion.sub)) {
     return NextResponse.json({ error: 'Solo podés editar tus propias recetas' }, { status: 403 });
   }
 
@@ -141,7 +157,7 @@ export async function PUT(req: NextRequest) {
   db.prepare(
     `UPDATE recetas SET nombre = ?, nombre_original = ?, tipo_comida = ?,
        calorias = ?, proteinas = ?, carbohidratos = ?, grasas = ?, fibra = ?,
-       tiempo_preparacion = ?, tiempo_total = ?, ingredientes = ?, pasos = ?
+       tiempo_preparacion = ?, tiempo_total = ?, ingredientes = ?, pasos = ?, usuario_id = ?
      WHERE id = ?`
   ).run(
     nombre,
@@ -156,6 +172,7 @@ export async function PUT(req: NextRequest) {
     prep,
     JSON.stringify(ingredientes),
     JSON.stringify(pasos),
+    sesion.sub,
     id
   );
 
