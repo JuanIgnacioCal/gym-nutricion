@@ -148,6 +148,7 @@ export async function GET() {
       kcal: s.objetivo_calorias,
       comidas: s.objetivo_comidas === 4 ? 4 : 3,
       objetivo_tipo,
+      esDueno: esEmailDueno(s.email),
     };
   });
 

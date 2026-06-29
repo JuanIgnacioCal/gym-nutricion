@@ -164,6 +164,8 @@ export interface PanelSocio {
   kcal: number;
   comidas: 3 | 4;
   objetivo_tipo: ObjetivoTipo | null;
+  /** True si esta fila es el propio dueño del gym (no se le resetea la clave desde el panel). */
+  esDueno: boolean;
 }
 
 /** Respuesta de GET /api/panel: métricas agregadas del gym para el dueño. */

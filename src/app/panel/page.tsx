@@ -11,9 +11,11 @@ import {
   YAxis,
 } from 'recharts';
 import type { TooltipProps } from 'recharts';
-import { ArrowLeft, Users, Activity, UserCheck, CalendarPlus, Search, Info } from 'lucide-react';
+import { ArrowLeft, Users, Activity, UserCheck, CalendarPlus, Search, Info, KeyRound } from 'lucide-react';
 import type { ObjetivoTipo, PanelData, PanelSocio } from '@/types';
 import { useGymConfig } from '@/lib/useGymConfig';
+import ResetClaveModal from '@/components/ResetClaveModal';
+import { useToast } from '@/components/Toast';
 
 type Metric = 'planes' | 'comidas';
 type Gran = 'dia' | 'semana';
@@ -176,6 +178,8 @@ function Centro({ children }: { children: ReactNode }) {
 export default function PanelPage() {
   const router = useRouter();
   const gym = useGymConfig();
+  const { toast, mostrar } = useToast();
+  const [resetSocio, setResetSocio] = useState<PanelSocio | null>(null);
   const [data, setData] = useState<PanelData | null>(null);
   const [estadoCarga, setEstadoCarga] = useState<'cargando' | 'ok' | 'denegado' | 'error'>('cargando');
   const [metric, setMetric] = useState<Metric>('planes');
@@ -441,6 +445,9 @@ export default function PanelPage() {
                     {th('ultimo', 'Últ. activo')}
                     {th('kcal', 'Objetivo')}
                     {th('estado', 'Estado')}
+                    <th className="whitespace-nowrap border-b border-borde px-2.5 py-2 text-left text-[11.5px] font-semibold uppercase tracking-wide text-texto-sec">
+                      Acciones
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -473,12 +480,25 @@ export default function PanelPage() {
                             {em.label}
                           </span>
                         </td>
+                        <td className="whitespace-nowrap border-b border-borde px-2.5 py-3">
+                          {s.esDueno ? (
+                            <span className="text-xs text-texto-sec">Vos</span>
+                          ) : (
+                            <button
+                              onClick={() => setResetSocio(s)}
+                              className="inline-flex items-center gap-1.5 rounded-btn px-2.5 py-1.5 text-xs font-semibold"
+                              style={{ background: 'var(--color-superficie-alt)', border: '1px solid var(--color-borde)', color: 'var(--color-texto)' }}
+                            >
+                              <KeyRound size={13} /> Resetear clave
+                            </button>
+                          )}
+                        </td>
                       </tr>
                     );
                   })}
                   {sociosVisibles.length === 0 && (
                     <tr>
-                      <td colSpan={6} className="py-7 text-center text-texto-sec">
+                      <td colSpan={7} className="py-7 text-center text-texto-sec">
                         Sin resultados
                       </td>
                     </tr>
@@ -538,6 +558,15 @@ export default function PanelPage() {
           </p>
         </section>
       </main>
+
+      {resetSocio && (
+        <ResetClaveModal
+          socio={resetSocio}
+          onClose={() => setResetSocio(null)}
+          onDone={(m) => mostrar(m)}
+        />
+      )}
+      {toast}
     </div>
   );
 }
