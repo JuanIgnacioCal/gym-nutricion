@@ -11,7 +11,7 @@ import {
   YAxis,
 } from 'recharts';
 import type { TooltipProps } from 'recharts';
-import { ArrowLeft, Users, Activity, UserCheck, CalendarPlus, Search, Info, KeyRound } from 'lucide-react';
+import { ArrowLeft, Users, Activity, UserCheck, CalendarPlus, Search, Info, KeyRound, Download } from 'lucide-react';
 import type { ObjetivoTipo, PanelData, PanelSocio } from '@/types';
 import { useGymConfig } from '@/lib/useGymConfig';
 import ResetClaveModal from '@/components/ResetClaveModal';
@@ -353,7 +353,18 @@ export default function PanelPage() {
             <p className="text-xs text-texto-sec">Panel del dueño</p>
           </div>
         </div>
-        <span className="text-xs text-texto-sec">{fmtFechaLarga(data.generadoEl)}</span>
+        <div className="flex items-center gap-3">
+          <a
+            href="/api/panel/backup"
+            download
+            title="Descarga una copia de toda la información para guardarla afuera"
+            className="inline-flex items-center gap-1.5 rounded-btn px-3 py-2 text-xs font-semibold"
+            style={{ background: 'var(--color-superficie)', border: '1px solid var(--color-borde)', color: 'var(--color-texto)' }}
+          >
+            <Download size={15} /> Backup
+          </a>
+          <span className="hidden text-xs text-texto-sec sm:inline">{fmtFechaLarga(data.generadoEl)}</span>
+        </div>
       </header>
 
       <main className="mx-auto max-w-5xl p-5">
@@ -555,6 +566,11 @@ export default function PanelPage() {
           <p className="leading-relaxed">
             Un <b style={{ color: 'var(--color-texto)' }}>socio activo</b> generó un plan o registró una comida dentro de la ventana indicada. En la tabla:
             Activo ≤ 7 días, Poco activo 8–30 días, Inactivo más de 30 días sin usar la app.
+          </p>
+          <p className="mt-3 leading-relaxed">
+            <b style={{ color: 'var(--color-texto)' }}>Backup:</b> el botón “Backup” de arriba descarga una copia de
+            toda la información. Bajala cada tanto y guardala en un lugar seguro (Drive, mail); es tu respaldo si
+            algo le pasa al servidor.
           </p>
         </section>
       </main>
