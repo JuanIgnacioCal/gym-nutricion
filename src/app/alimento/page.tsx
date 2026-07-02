@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search } from 'lucide-react';
+import { ArrowLeft, Search } from 'lucide-react';
 import type { TipoComida, UserProfile, AlimentoBusqueda } from '@/types';
 import { getUserAsync, aplicarTema } from '@/lib/usuario';
 import { fechaHoy, slotsDe, labelSlot } from '@/lib/util';
@@ -94,9 +94,14 @@ export default function AlimentoPage() {
   const tipos = slots.map((s) => ({ value: s.value, label: s.label }));
 
   return (
-    <main className="min-h-screen px-4 pt-6">
-      <h1 className="text-xl font-bold mb-1 text-center">Macros de un alimento</h1>
-      <p className="text-sm text-center mb-4" style={{ color: 'var(--color-texto-sec)' }}>
+    <main className="min-h-screen px-4 pt-5">
+      <header className="flex items-center gap-3 mb-1">
+        <button onClick={() => router.back()} aria-label="Volver">
+          <ArrowLeft size={22} />
+        </button>
+        <h1 className="text-xl font-bold">Macros de un alimento</h1>
+      </header>
+      <p className="text-sm mb-4" style={{ color: 'var(--color-texto-sec)' }}>
         Consultá los valores reales por 100g de cualquier ingrediente.
       </p>
 
