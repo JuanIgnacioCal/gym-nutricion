@@ -1,12 +1,13 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { X, ClipboardList, Search, Pencil, Sun, Moon, ChefHat, Apple, Calculator, ChevronDown, BarChart3, LogOut } from 'lucide-react';
+import { X, ClipboardList, Search, Pencil, Sun, Moon, ChefHat, Apple, Calculator, ChevronDown, BarChart3, LogOut, KeyRound } from 'lucide-react';
 import type { UserProfile } from '@/types';
 import { getUserAsync, saveUser, aplicarTema, clearUserLocal } from '@/lib/usuario';
 import { useGymConfig } from '@/lib/useGymConfig';
 import ObjetivosFields, { Objetivo } from './ObjetivosFields';
 import AgregarRecetaModal from './AgregarRecetaModal';
+import CambiarClaveModal from './CambiarClaveModal';
 import { useToast } from './Toast';
 import { calcularTDEE, OPC_SEXO, OPC_ACTIVIDAD, OPC_OBJETIVO } from '@/lib/calorias';
 
@@ -37,6 +38,7 @@ export default function HamburgerMenu({ abierto, onClose, onPerfilActualizado }:
   const [nombre, setNombre] = useState('');
   const [email, setEmail] = useState('');
   const [agregarReceta, setAgregarReceta] = useState(false);
+  const [cambiarClave, setCambiarClave] = useState(false);
 
   useEffect(() => {
     if (abierto) {
@@ -369,6 +371,13 @@ export default function HamburgerMenu({ abierto, onClose, onPerfilActualizado }:
                 >
                   Guardar
                 </button>
+                <button
+                  onClick={() => setCambiarClave(true)}
+                  className="flex items-center justify-center gap-2 rounded-btn py-2.5 text-sm font-semibold"
+                  style={{ border: '1px solid var(--color-borde)', color: 'var(--color-texto)' }}
+                >
+                  <KeyRound size={16} /> Cambiar contraseña
+                </button>
               </div>
             </section>
 
@@ -386,7 +395,7 @@ export default function HamburgerMenu({ abierto, onClose, onPerfilActualizado }:
               <button onClick={() => irA('/legal')} className="underline" style={{ color: 'var(--color-texto-sec)' }}>
                 Términos y privacidad
               </button>
-              <p className="mt-1">v1.0 — Prototipo</p>
+              <p className="mt-1">v1.0</p>
               <p>{gym.nombre} · Tucumán</p>
             </footer>
           </div>
@@ -400,6 +409,12 @@ export default function HamburgerMenu({ abierto, onClose, onPerfilActualizado }:
             setAgregarReceta(false);
             mostrar(`✅ Receta "${r.nombre}" guardada`);
           }}
+        />
+      )}
+      {cambiarClave && (
+        <CambiarClaveModal
+          onClose={() => setCambiarClave(false)}
+          onDone={(m) => mostrar(m)}
         />
       )}
       {toast}
